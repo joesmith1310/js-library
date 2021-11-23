@@ -1,25 +1,30 @@
-let theme = 'green';
+const formations = new Map([
+    ['Soccer', [[1,4,4,2], [1,4,3,3]]],
+    ['Hockey', [[1,3,2]]]
+]);
 
-function TeamViewer(viewerId) {
+const reducer = (accumulator, curr) => accumulator + curr;
+
+function TeamViewer(viewerId, theme = 'green') {
     this.viewerId = viewerId;
     this.formationViews = [];
     this.playerForm = null;
     this.players = [];
+    this.theme = theme;
 }
 
 TeamViewer.prototype = {
 
-    createFormationViews : function() {
+    createFormationViews : function(width = 400, height = 500, sport = 'Soccer', formation = [1,4,4,2], nodeSize = 70) {
         let views = document.getElementsByClassName('tv-formation-view');
 
         for (let i = 0; i < views.length; i++) {
             if (views[i].classList.contains(this.viewerId)) {
                 let view = views[i]
                 console.log(view);
-                let formationView = new FormationView(view, this);
+                let formationView = new FormationView(view, this, width, height, sport, formation, nodeSize);
                 this.formationViews.push(formationView);
-                formationView.createPitch();
-                formationView.createBench();
+                formationView.init();
             }
         }
     },
@@ -51,36 +56,132 @@ TeamViewer.prototype = {
         }
     },
 
+    removePlayer : function(player) {
+        let playerObject = null;
+        if (typeof player == 'number') {
+            for (let i = 0; i < this.players.length; i++) {
+                if(this.players[i].number == player) {
+                    playerObject = this.players[i];
+                }
+            }
+        }
+        else {
+            playerObject = player;
+        }
+        let index = this.players.indexOf(playerObject);
+        this.players.splice(index, 1);
+        for (let i = 0; i < this.formationViews.length; i++) {
+            let view = this.formationViews[i];
+            view.removePlayer(playerObject);
+        }
+    }
+
     //getPlayerKey: function(playerNumber)
 }
 
-function FormationView(view, teamViewer) {
+function FormationView(view, teamViewer, width, height, sport, formation, nodeSize) {
     this.teamViewer = teamViewer;
+    this.sport = sport;
     this.view = view;
     this.subs = new Map();
     this.nodes = new Map();
-    this.width = 400;
-    this.height = 500;
-    this.formationSize = 4;
-    this.formationStyle = [1,2,1];
+    this.width = width;
+    this.height = height;
+    this.formationStyle = formation;
     this.positionMap = new Map();
-    this.nodeSize = 70;
+    this.nodeSize = nodeSize;
     this.draggedPlayer = null;
 }
 
 FormationView.prototype = {
 
+    init : function() {
+        this.createToolBar();
+        this.createPitch();
+        this.createBench();
+    },
+
+    updateView : function() {
+        console.log('view updated');
+        console.log(this.view.children[1]);
+        this.nodes.clear();
+        this.subs.clear();
+        this.view.removeChild(this.view.children[2]);
+        this.view.removeChild(this.view.children[1]);
+        this.createPitch();
+        this.createBench();
+        this.reloadPlayers();
+    },
+
+    updateToolBar : function() {
+        this.view.replaceChild(this.createToolBar(), this.view.children[0]);
+    },
+
+    createToolBar : function() {
+        let toolBar = document.createElement('div');
+        let sportOptionLabel = document.createElement('label');
+        sportOptionLabel.setAttribute('for', `sportOption${this.teamViewer.viewerId}`);
+        sportOptionLabel.innerText = 'Sport';
+        let sportOption = document.createElement('select');
+        sportOption.setAttribute('id', `sportOption${this.teamViewer.viewerId}`);
+        sportOption.addEventListener('change', () => {
+            console.log("Option selected");
+            let sport = sportOption.value;
+            this.changeSport(sport);
+            this.updateToolBar();
+        });
+        for (const [key, value] of formations) {
+            let option = document.createElement('option');
+            option.innerText = key;
+            if(key == this.sport) {
+                option.selected = 'selected';
+            }
+            sportOption.appendChild(option);
+        }
+        toolBar.appendChild(sportOptionLabel);
+        toolBar.appendChild(sportOption);
+        let formationOptionLabel = document.createElement('label');
+        formationOptionLabel.setAttribute('for', `formationOption${this.teamViewer.viewerId}`);
+        formationOptionLabel.innerText = 'Formation';
+        let formationOption = document.createElement('select');
+        formationOption.setAttribute('id', `formationOption${this.teamViewer.viewerId}`);
+        formationOption.addEventListener('change', () => {
+            console.log("Option selected");
+            let style = formationOption.value.split(',');
+            let charToInt = num => Number(num);
+            let intArr = Array.from(style, charToInt);
+            this.changeFormation(intArr);
+        });
+        let forms = formations.get(this.sport);
+        for (let i = 0; i < forms.length; i++) {
+            let option = document.createElement('option');
+            option.innerText = forms[i];
+            formationOption.appendChild(option);
+        }
+        toolBar.appendChild(formationOptionLabel);
+        toolBar.appendChild(formationOption);
+        this.view.appendChild(toolBar);
+        sportOption.style.cssText = `
+        margin: 0 10px;`;
+        formationOption.style.cssText = `
+        margin: 0 10px;`;
+        toolBar.style.cssText = `
+        padding: 10px;
+        display: flex;
+        align-items: center;`
+        return toolBar;
+    },
+
     createPitch : function() {
-        pitch = document.createElement('div');
+        let pitch = document.createElement('div');
         pitch.style.width = `${this.width}px`;
         pitch.style.height = `${this.height}px`;
-        pitch.style.backgroundColor = theme;
+        pitch.style.backgroundColor = this.teamViewer.theme;
         pitch.style.position = 'relative';
         pitch.style.display = 'inline-block';
         this.view.appendChild(pitch);
         this.generatePositionMap();
-        console.log(`pos map 0: ${this.positionMap.get(0)}`);
-        for (let i = 0; i < this.formationSize; i++) {
+        for (let i = 0; i < this.formationStyle.reduce(reducer); i++) {
             let node = document.createElement('div');
             node.addEventListener('drop', (ev) => { 
                 ev.preventDefault();
@@ -116,7 +217,13 @@ FormationView.prototype = {
         border: 1px solid black;
         overflow-y: scroll;`;
         this.view.appendChild(bench);
-        benchList = document.createElement('ul');
+        let benchLabel = document.createElement('div');
+        benchLabel.innerText = 'Substitutes';
+        bench.appendChild(benchLabel);
+        benchLabel.style.cssText = `
+        font-size: 120%;
+        margin: 10px 10px;`;
+        let benchList = document.createElement('ul');
         benchList.style.cssText = `
         list-style: none;
         padding: 0 10px;`;
@@ -135,13 +242,19 @@ FormationView.prototype = {
         }
     },
 
+    reloadPlayers : function() {
+        for (let i = 0; i < this.teamViewer.players.length; i++) {
+            this.addPlayer(this.teamViewer.players[i]);
+        }
+    },
+
     addPlayer : function(player) {
         let takenPositions = []
         for (const [key, value] of this.nodes.entries()) {
             takenPositions.push(value);
         }
         let isSub = true;
-        for (let i = 0; i < this.formationSize; i++) {
+        for (let i = 0; i < this.formationStyle.reduce(reducer); i++) {
             if (!takenPositions.includes(i)) {
                 isSub = false;
                 this.nodes.set(player, i);
@@ -158,13 +271,114 @@ FormationView.prototype = {
         }
     },
 
+    removePlayer : function(player) {
+        let sub = this.subs.get(player);
+        let node = this.nodes.get(player);
+        if (node != null) {
+            let nodeBody = this.view.children[1].children[node].children[0];
+            this.view.children[1].children[node].removeChild(nodeBody);
+            this.nodes.delete(player);
+        }
+        if (sub != null) {
+            let listElement = this.view.children[2].children[1].children[sub];
+            this.view.children[2].children[1].removeChild(listElement);
+            this.subs.delete(player);
+        }
+    },
+
+    changeSport : function(sport) {
+        if (formations.get(sport) != null) {
+            this.sport = sport;
+            this.formationStyle = formations.get(sport)[0];
+            this.updateView();
+        }
+    },
+
+    changeFormation : function(formation) {
+        if (formations.get(this.sport)[0].reduce(reducer) == formation.reduce(reducer)) {
+            this.formationStyle = formation;
+            this.updateView();
+        }
+    },
+
     createNodeBody : function(player) {
         let nodeBody = document.createElement('div');
         nodeBody.setAttribute('draggable', 'true');
         nodeBody.addEventListener('dragstart', (ev) => {
             ev.preventDefault;
+            this.collapseNode(nodeBody);
             this.draggedPlayer = player;
         });
+        let number = document.createElement('label');
+        let name = document.createElement('label');
+        let position = document.createElement('label');
+        let comment = document.createElement('p');
+        let button = createButton('Remove', this.teamViewer.theme);
+        button.addEventListener('click', () => {
+            this.teamViewer.removePlayer(player);
+            document.body.style.cursor = 'default';
+        });
+        number.innerText = player.number;
+        name.innerText = player.name;
+        position.innerText = player.pos;
+        comment.innerText = player.comment;
+        nodeBody.appendChild(number);
+        nodeBody.appendChild(name);
+        nodeBody.appendChild(position);
+        nodeBody.appendChild(comment);
+        nodeBody.appendChild(button);
+        nodeBody.classList.add('collapsed');
+        nodeBody.addEventListener('click', () => {
+            if (nodeBody.classList.contains('collapsed')) {
+                //expand here
+                nodeBody.style.cssText = `
+                width: auto;
+                height: auto;
+                z-index: 1;
+                padding: 15px;
+                border-radius: 5px;
+                background-color: white;
+                position: absolute;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                border: 1px solid black;
+                min-height: ${this.nodeSize}`;
+                name.style.cssText = `
+                margin-bottom:10px;
+                font-size: 120%;`;
+                number.style.cssText = `
+                margin-bottom: 10px;
+                font-size: 150%;`;
+                position.style.cssText = `
+                display: block;
+                margin-bottom: 10px;
+                color: gray`;
+                comment.style.cssText = `
+                display: block;
+                margin: 0 0 10px 0;
+                min-width: 100px;`;
+                button.style.cssText = `
+                display: block;
+                background-color: ${this.teamViewer.theme};
+                height: 40px;
+                line-height: 40px;
+                border-radius: 20px;
+                text-align: center;`;
+                nodeBody.classList.remove('collapsed');
+            }
+            else {
+                //collapse here
+                this.collapseNode(nodeBody);
+            }
+        });
+        comment.style.display = 'none';
+        this.collapseNode(nodeBody);
+        return nodeBody;
+
+    },
+
+    collapseNode : function(nodeBody) {
         nodeBody.style.cssText = `
         color: white;
         width: ${this.nodeSize - 10}px;
@@ -175,16 +389,20 @@ FormationView.prototype = {
         flex-direction: column;
         align-items: center;
         justify-content: center;`;
-        let number = document.createElement('label');
-        let name = document.createElement('label');
-        number.innerText = player.number;
-        number.style.fontSize = '150%';
-        name.innerText = player.name;
-        nodeBody.appendChild(number);
-        nodeBody.appendChild(name);
-        return nodeBody;
-
-    },
+        let number = nodeBody.children[0];
+        number.style.cssText = `
+        font-size: 150%;`;
+        let position = nodeBody.children[2];
+        position.style.cssText = `
+        display: none;`;
+        let comment = nodeBody.children[3];
+        comment.style.cssText = `
+        display: none;`;
+        let button = nodeBody.children[4];
+        button.style.cssText = `
+        display: none;`;
+        nodeBody.classList.add('collapsed');
+        },
 
     createSub : function(player) {
         const listElement = document.createElement('li');
@@ -260,10 +478,10 @@ FormationView.prototype = {
             }
         }
     
-        let incomingPlayerNode = this.view.children[0].children[this.nodes.get(incomingPlayer)];
-        let receivingPlayerNode = this.view.children[0].children[this.nodes.get(receivingPlayer)];
-        let incomingPlayerListEntry = this.view.children[1].children[0].children[this.subs.get(incomingPlayer)];
-        let receivingPlayerListEntry = this.view.children[1].children[0].children[this.subs.get(receivingPlayer)];
+        let incomingPlayerNode = this.view.children[1].children[this.nodes.get(incomingPlayer)];
+        let receivingPlayerNode = this.view.children[1].children[this.nodes.get(receivingPlayer)];
+        let incomingPlayerListEntry = this.view.children[2].children[1].children[this.subs.get(incomingPlayer)];
+        let receivingPlayerListEntry = this.view.children[2].children[1].children[this.subs.get(receivingPlayer)];
 
         if (incomingPlayerNode != null && receivingPlayerNode != null && incomingPlayerListEntry == null && receivingPlayerListEntry == null) {
             let incomingNodeBody = this.createNodeBody(incomingPlayer);
@@ -293,15 +511,27 @@ FormationView.prototype = {
             this.subs.set(receivingPlayer, this.subs.get(incomingPlayer));
             this.subs.delete(incomingPlayer);
         }
+        else if (incomingPlayerNode != null && receivingPlayerNode == null && incomingPlayerListEntry == null && receivingPlayerListEntry == null) {
+            let nodeBody = this.createNodeBody(incomingPlayer);
+            this.view.children[1].children[index].appendChild(nodeBody);
+            incomingPlayerNode.removeChild(incomingPlayerNode.children[0]);
+            this.nodes.set(incomingPlayer, index);
+        }
+        else if (incomingPlayerNode == null && receivingPlayerNode == null && incomingPlayerListEntry != null && receivingPlayerListEntry == null) {
+            let nodeBody = this.createNodeBody(incomingPlayer);
+            this.view.children[1].children[index].appendChild(nodeBody);
+            this.view.children[2].children[1].removeChild(incomingPlayerListEntry);
+            this.nodes.set(incomingPlayer, index);
+        }
     },
 
     addSub : function(sub) {
-        let sublist = this.view.children[1].children[0];
+        let sublist = this.view.children[2].children[1];
         sublist.appendChild(sub);
     },
 
     removeSub : function(sub) {
-        let sublist = this.view.children[1].children[0];
+        let sublist = this.view.children[2].children[1];
         for (let i = 0; i < sublist.children.length; i++) {
             if (sublist.children[i].isEqualNode(sub)) {
                 sublist.removeChild(sublist.children[i]);
@@ -310,7 +540,7 @@ FormationView.prototype = {
     },
 
     addNode : function(nodeID, nodeBody) {
-        let node = this.view.children[0].children[nodeID];
+        let node = this.view.children[1].children[nodeID];
         node.appendChild(nodeBody);
     }
 
@@ -347,7 +577,7 @@ PlayerForm.prototype = {
             height: 40px;
             margin-right: 10px;
             border-radius: 20px;
-            outline: 1px solid ${theme};
+            outline: 1px solid ${this.teamViewer.theme};
             border: none;`;
         }
         let submitButton = document.createElement('div');
@@ -355,7 +585,7 @@ PlayerForm.prototype = {
         submitButton.style.cssText = `
         width: 100px;
         height: 50px;
-        background-color: ${theme};
+        background-color: ${this.teamViewer.theme};
         border-radius: 25px;
         display: flex;
         justify-content: center;
@@ -386,6 +616,25 @@ function Player(name, number, pos, comment) {
     this.number = number;
     this.pos = pos;
     this.comment = comment;
+}
+
+function createButton(text, color) {
+    let button = document.createElement('div');
+    button.addEventListener('mouseover', () => {
+        document.body.style.cursor = 'pointer';
+    });
+    button.addEventListener('mouseleave', () => {
+        document.body.style.cursor = 'default';
+    });
+    button.innerText = text;
+    button.style.cssText = `
+    display: flex-box;
+    align-items: center;
+    justify-content: center;
+    background-color: ${color};
+    height: 40px;
+    border-radius: 20px;`;
+    return button;
 }
 
 
