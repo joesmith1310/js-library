@@ -296,6 +296,7 @@ FormationView.prototype = {
             let listElement = this.view.children[2].children[1].children[sub];
             this.view.children[2].children[1].removeChild(listElement);
             this.subs.delete(player);
+            this.reindexSubs();
         }
     },
 
@@ -537,7 +538,6 @@ FormationView.prototype = {
         let receivingPlayerNode = this.view.children[1].children[this.nodes.get(receivingPlayer)];
         let incomingPlayerListEntry = this.view.children[2].children[1].children[this.subs.get(incomingPlayer)];
         let receivingPlayerListEntry = this.view.children[2].children[1].children[this.subs.get(receivingPlayer)];
-
         if (incomingPlayerNode != null && receivingPlayerNode != null && incomingPlayerListEntry == null && receivingPlayerListEntry == null) {
             let incomingNodeBody = this.createNodeBody(incomingPlayer);
             let receivingNodeBody = this.createNodeBody(receivingPlayer);
@@ -577,12 +577,22 @@ FormationView.prototype = {
             this.view.children[1].children[index].appendChild(nodeBody);
             this.view.children[2].children[1].removeChild(incomingPlayerListEntry);
             this.nodes.set(incomingPlayer, index);
+            this.subs.delete(incomingPlayer);
+            this.reindexSubs();
         }
     },
 
     addSub : function(sub) {
         let sublist = this.view.children[2].children[1];
         sublist.appendChild(sub);
+    },
+
+    reindexSubs : function() {
+        let newIndex = 0;
+        for (const [key, value] of this.subs.entries()) {
+            this.subs.set(key, newIndex);
+            newIndex++;
+        }
     },
 
     removeSub : function(sub) {
