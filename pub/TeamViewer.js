@@ -357,6 +357,9 @@ FormationView.prototype = {
         nodeBody.addEventListener('dragover', () => {
             nodeBody.style.boxShadow = '0 0 5px 3px #00ccff';
         });
+        nodeBody.addEventListener('dragleave', () => {
+            nodeBody.style.boxShadow = 'none';
+        });
         nodeBody.addEventListener('mouseover', () => {
             document.body.style.cursor = 'pointer';
             nodeBody.style.boxShadow = '0 0 5px 3px #00ccff';
