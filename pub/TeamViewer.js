@@ -1,6 +1,6 @@
 const formations = new Map([
-    ['Soccer', [[1,4,4,2], [1,4,3,3]]],
-    ['Hockey', [[1,3,2]]]
+    ['Soccer', [[1,4,4,2], [1,4,3,3], [1,4,5,1], [1,3,4,3]]],
+    ['Hockey', [[1,3,2], [1,4,1], [1,2,3]]]
 ]);
 
 const reducer = (accumulator, curr) => accumulator + curr;
