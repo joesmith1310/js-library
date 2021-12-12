@@ -1,3 +1,6 @@
+let Frames = [];
+let currFrame = 0;
+
 const formations = new Map([
     ['Soccer', [[1,4,4,2], [1,4,3,3], [1,4,5,1], [1,3,4,3]]],
     ['Hockey', [[1,3,2], [1,4,1], [1,2,3]]]
@@ -103,24 +106,53 @@ function FormationView(view, teamViewer, width, height, sport, formation, nodeSi
     this.positionMap = new Map();
     this.nodeSize = nodeSize;
     this.draggedPlayer = null;
+
+    this.layers = [];
+    this.overlays = []; //Used when loading a frame
+    this.activeLayer = 0;
+    this.currArrow = [];
+    this.isCustomFormation = false;
+    this.mpm = false; //Move player mode
+    this.showPageNums = true;
+    this.currFrame = 0;
+
+    this.frames = [];
 }
 
 FormationView.prototype = {
 
     init : function() {
         this.createToolBar();
+        this.generatePositionMap();
         this.createPitch();
         this.createBench();
     },
 
-    updateView : function() {
+    updateView : function(customPositionMap = false) {
         this.nodes.clear();
         this.subs.clear();
         this.view.removeChild(this.view.children[2]);
         this.view.removeChild(this.view.children[1]);
+        if (customPositionMap == false) {
+            this.generatePositionMap();
+            this.isCustomFormation = false;
+        }
         this.createPitch();
         this.createBench();
         this.reloadPlayers();
+        this.setLayer(0);
+    },
+
+    updateView2 : function() {
+        this.view.removeChild(this.view.children[2]);
+        this.view.removeChild(this.view.children[1]);
+        this.createPitch(exisitingOverlays = true);
+        this.createBench();
+        this.loadExisitingNodeLists();
+        this.setLayer(this.activeLayer);
+        if (this.mpm) {
+            this.movePlayerMode();
+        };
     },
 
     updateToolBar : function() {
@@ -135,6 +167,7 @@ FormationView.prototype = {
         let sportOption = document.createElement('select');
         sportOption.setAttribute('id', `sportOption${this.teamViewer.viewerId}`);
         sportOption.addEventListener('change', () => {
+            this.movePlayerMode(false);
             let sport = sportOption.value;
             this.setSport(sport);
             this.updateToolBar();
@@ -155,6 +188,7 @@ FormationView.prototype = {
         let formationOption = document.createElement('select');
         formationOption.setAttribute('id', `formationOption${this.teamViewer.viewerId}`);
         formationOption.addEventListener('change', () => {
+            this.movePlayerMode(false);
             let style = formationOption.value.split(',');
             let charToInt = num => Number(num);
             let intArr = Array.from(style, charToInt);
@@ -164,14 +198,19 @@ FormationView.prototype = {
         for (let i = 0; i < forms.length; i++) {
             let option = document.createElement('option');
             option.innerText = forms[i];
-            if (forms[i] == this.formationStyle) {
+            if (equals(forms[i], this.formationStyle)) {
                 option.selected = 'selected';
             }
             formationOption.appendChild(option);
         }
+        if (this.isCustomFormation == true) {
+            let option = document.createElement('option');
+            option.innerText = 'Custom';
+            option.selected = 'selected';
+            formationOption.appendChild(option);
+        }
         toolBar.appendChild(formationOptionLabel);
         toolBar.appendChild(formationOption);
-        this.view.appendChild(toolBar);
         sportOption.style.cssText = `
         margin: 0 10px;`;
         formationOption.style.cssText = `
@@ -180,10 +219,104 @@ FormationView.prototype = {
         padding: 10px;
         display: flex;
         align-items: center;`
+
+        let drawButton = document.createElement('button');
+        if (this.activeLayer == 2) {
+            drawButton.style.backgroundColor = 'gray';
+        }
+        drawButton.innerText = 'Draw';
+        drawButton.addEventListener('click', () => {
+            if (this.activeLayer != 2) {
+                this.movePlayerMode(false);
+                this.setLayer(2);
+            }
+            else {
+                this.setLayer(0);
+            }
+        });
+        toolBar.appendChild(drawButton);
+
+        let annotateButton = document.createElement('button');
+        if (this.activeLayer == 1) {
+            annotateButton.style.backgroundColor = 'gray';
+        }
+        annotateButton.innerText = 'Annotate';
+        annotateButton.addEventListener('click', () => {
+            if (this.activeLayer != 1) {
+                this.movePlayerMode(false);
+                this.setLayer(1);
+            }
+            else {
+                this.setLayer(0);
+            }
+        });
+        toolBar.appendChild(annotateButton);
+
+        let moveButton = document.createElement('button');
+        moveButton.innerHTML = '&#8660;';
+        moveButton.style.cssText = `
+        display: flex;
+        align-items: center;
+        height: 21px;`;
+        if (this.mpm) {
+            moveButton.style.backgroundColor = 'gray';
+        }
+        moveButton.addEventListener('click', () => {
+            if (this.mpm == false) {
+                this.movePlayerMode();
+                moveButton.style.backgroundColor = 'gray';
+                this.setLayer(0);
+            }
+            else {
+                this.movePlayerMode(false);
+                moveButton.style.backgroundColor = 'initial';
+            }
+        });
+        toolBar.appendChild(moveButton);
+
+        const saveButton = document.createElement('button');
+        saveButton.innerHTML = '&#43;';
+        saveButton.addEventListener('click', () => {
+            this.saveFrame();
+        });
+        saveButton.style.cssText = `
+        display: flex;
+        align-items: center;
+        height: 21px;`
+
+        toolBar.appendChild(saveButton);
+
+        const cycleButton = document.createElement('button');
+        cycleButton.innerHTML = '&#8618;';
+        cycleButton.addEventListener('click', () => {
+            this.cycleFrames();
+        });
+        cycleButton.style.cssText = `
+        display: flex;
+        align-items: center;
+        height: 21px;`
+
+        toolBar.appendChild(cycleButton);
+
+        const jsonButton = document.createElement('button');
+        jsonButton.innerHTML = 'JSON';
+        jsonButton.addEventListener('click', () => {
+            this.toJSON();
+        });
+        jsonButton.style.cssText = `
+        display: flex;
+        align-items: center;
+        height: 21px;`
+
+        toolBar.appendChild(jsonButton);
+
+        this.view.appendChild(toolBar);
+
         return toolBar;
     },
 
-    createPitch : function() {
+    createPitch : function(exisitingOverlays = false) {
+        this.layers = [];
         let pitch = document.createElement('div');
         pitch.style.width = `70%`;
         pitch.style.height = `100%`;
@@ -191,7 +324,6 @@ FormationView.prototype = {
         pitch.style.position = 'relative';
         pitch.style.display = 'inline-block';
         this.view.appendChild(pitch);
-        this.generatePositionMap();
         for (let i = 0; i < this.formationStyle.reduce(reducer); i++) {
             let node = document.createElement('div');
             node.addEventListener('drop', (ev) => { 
@@ -213,7 +345,276 @@ FormationView.prototype = {
             position: absolute;
             bottom: ${this.positionMap.get(i)[0] - this.nodeSize/2};
             left: ${this.positionMap.get(i)[1] - this.nodeSize/2};`;
+            node.classList.add('nodeContainer');
             pitch.appendChild(node);
+        }
+        pitch.classList.add('main');
+        this.layers.push('main');
+
+        if (exisitingOverlays == false || this.overlays.length == 0) {
+            let annotateOverlay = this.createOverlay('annotateOverlay')
+            pitch.appendChild(annotateOverlay);
+
+            let drawOverlay = this.createOverlay('drawOverlay')
+            pitch.appendChild(drawOverlay);
+
+            this.overlays = [];
+        }
+
+        else {
+            this.layers.push('annotateOverlay');
+            pitch.appendChild(this.overlays[0]);
+    
+            this.layers.push('drawOverlay');
+            pitch.appendChild(this.overlays[1]);
+        }
+
+        const pageIndicator = document.createElement('label');
+        pageIndicator.classList.add('pageIndicator');
+        if (this.frames.length == 0) {
+            pageIndicator.innerText = 'Click + to add new frames.'
+        }
+        else {
+            pageIndicator.innerText = `${this.frames.length}/${this.frames.length}`;
+        }
+        pageIndicator.style.cssText = `
+        font-size: 10px;
+        position: absolute;
+        bottom : 5px;
+        left: 5px;`
+        pitch.appendChild(pageIndicator);
+
+    },
+
+    createOverlay : function(overlayType) {
+        this.layers.push(overlayType);
+        let overlay = null;
+        if (overlayType == 'drawOverlay') {
+            overlay = this.createDrawOverlay();
+            overlay.classList.add(overlayType);
+        }
+        if (overlayType == 'annotateOverlay') {
+            overlay = this.createAnnotateOverlay();
+            overlay.classList.add(overlayType);
+        }
+        overlay.style.cssText = `
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1;`
+        return overlay;
+    },
+
+    //DRAW OVERLAY
+
+    createDrawOverlay : function() {
+        const canvas = document.createElement('div');
+
+        const clearButton = document.createElement('button');
+        clearButton.classList.add('hideWithLayer');
+        clearButton.style.cssText = `
+        position: absolute;
+        top: 5px;
+        left: 5px;`
+        clearButton.innerText = 'Clear';
+        canvas.appendChild(clearButton);
+
+        const chooseColorSelector = document.createElement('select');
+        chooseColorSelector.classList.add('hideWithLayer');
+        chooseColorSelector.style.cssText = `
+        position: absolute;
+        top: 5px;
+        right: 5px;`
+        chooseColorSelector.innerHTML = `
+        <option value="yellow">Yellow</option>
+        <option value="red">Red</option>
+        <option value="blue">Blue</option>
+        <option value="green">Green</option>`;
+        canvas.appendChild(chooseColorSelector);
+
+        this.addDrawEventListeners(clearButton, canvas, chooseColorSelector);
+
+        return canvas;
+    },
+
+    addDrawEventListeners : function(clearButton, canvas, chooseColorSelector) {
+        clearButton.addEventListener('click', () => {
+            this.clearArrows(canvas);
+        });
+
+        canvas.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('hideWithLayer')) {
+                var rect = canvas.getBoundingClientRect();
+                var xcoord = e.clientX - rect.x; //x position within the element.
+                var ycoord = e.clientY - rect.y;  //y position within the element.
+                
+                this.currArrow.push({x : xcoord, y : ycoord})
+
+                if (this.currArrow.length == 2) {
+                    this.drawArrow(this.currArrow[0], this.currArrow[1], canvas, chooseColorSelector.value);
+                    this.currArrow = []
+                }
+            }
+            else {
+                this.currArrow = [];
+            }
+        });
+        canvas.addEventListener('mousemove', (e) => {
+            var rect = canvas.getBoundingClientRect();
+                var xcoord = e.clientX - rect.x; //x position within the element.
+                var ycoord = e.clientY - rect.y;  //y position within the element.
+                
+            if (this.currArrow.length == 1) {
+                const arrs = canvas.querySelectorAll('.arrsvg');
+                if (arrs.length > 0) {
+                    canvas.removeChild(arrs[arrs.length - 1]);
+                }
+                this.drawArrow(this.currArrow[0], {x : xcoord, y : ycoord}, canvas, chooseColorSelector.value);
+            }
+        });
+    },
+
+    clearArrows : function(canvas) {
+        const arrows = canvas.querySelectorAll('.arrsvg');
+        for (let i = 0; i < arrows.length; i++) {
+            canvas.removeChild(arrows[i]);
+        }
+    },
+
+    drawArrow : function(c_e1, c_e2, canvas, color){
+        var arrsvg = `
+        <svg class="arrsvg" style="position:absolute; top:0; left:0; margin:0; width:99.8%; height:99.9%; pointer-events:none;">
+        <defs>
+        <marker id="arrowHead${color}" markerWidth="8" markerHeight="8" refx="3" refy="4" orient="auto"><path d="M1,1 L1,7 L7,4 L1,1" style="fill:${color};" />
+        </marker>
+        </defs>
+        <path d="M${c_e1.x},${c_e1.y} L${c_e2.x}, ${c_e2.y}" style="stroke:${color}; stroke-width: 2.3px; fill: none; marker-end: url(#arrowHead${color});"/>
+        </svg>`;
+        canvas.insertAdjacentHTML('beforeend', arrsvg);
+    },
+
+    //ANNOTATE OVERLAY
+
+    createAnnotateOverlay : function() {
+        const sheet = document.createElement('div');
+
+        const clearButton = document.createElement('button');
+        clearButton.classList.add('hideWithLayer');
+        clearButton.style.cssText = `
+        position: absolute;
+        top: 5px;
+        left: 5px;`
+        clearButton.innerText = 'Clear';
+        sheet.appendChild(clearButton);
+
+        this.addAnnotateEventListeners(clearButton, sheet);
+        return sheet;
+    },
+
+    addAnnotateEventListeners : function(clearButton, sheet) {
+        clearButton.addEventListener('click', () => {
+            const annotations = sheet.querySelectorAll('.annotation');
+            for (let i = 0; i < annotations.length; i++) {
+                sheet.removeChild(annotations[i]);
+            }
+        });
+        sheet.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('hideWithLayer') && !e.target.classList.contains('annotation') ) {
+                var rect = sheet.getBoundingClientRect();
+                var xcoord = e.clientX - rect.x; //x position within the element.
+                var ycoord = e.clientY - rect.y;  //y position within the element.
+                
+                const form = document.createElement('input');
+                form.setAttribute('placeholder', 'Annotate...')
+                form.classList.add('annotation');
+                form.style.cssText = `
+                width: 100px;
+                position: absolute;
+                left: ${xcoord - 50}px;
+                top: ${ycoord}px;`
+                sheet.appendChild(form);
+                const drawAnnotation = this.drawAnnotation;
+
+                form.addEventListener('keyup', function onEvent(e) {
+                    if (e.key == 'Enter') {
+                        drawAnnotation(xcoord, ycoord, form.value, sheet);
+                        sheet.removeChild(form);
+                    }
+                });
+            }
+        });
+    },
+
+    drawAnnotation : function(x, y, text, sheet) {
+        const annotation = document.createElement('div');
+        annotation.classList.add('annotation');
+        annotation.style.cssText = `
+        width: 100px;
+        word-wrap: break-word;
+        background-color: white;
+        position: absolute;
+        left: ${x - 50}px;
+        top: ${y}px;`
+        annotation.innerText = text;
+        sheet.appendChild(annotation);
+    },
+
+    setLayer : function(layerIndex) {
+        this.activeLayer = layerIndex;
+        for (let i = 0; i < this.layers.length; i++) {
+            const overlayType = this.layers[i];
+            let layer = this.view.querySelector(`.${overlayType}`);
+            const hiddenElements = layer.querySelectorAll('.hideWithLayer');
+            if (i == layerIndex) {
+                layer.style.pointerEvents = 'auto';
+                if (overlayType != 'main') {
+                    layer.style.display = 'initial';
+                }
+                for (let i = 0; i < hiddenElements.length; i++) {
+                    hiddenElements[i].style.display = 'initial';
+                }
+            }
+            else {
+                layer.style.pointerEvents = 'none';
+                for (let i = 0; i < hiddenElements.length; i++) {
+                    hiddenElements[i].style.display = 'none';
+                }
+            }
+        }
+        this.updateToolBar();
+    },
+
+    movePlayerMode(on = true) {
+        const pitch = this.view.children[1];
+        const nodeContainers = pitch.querySelectorAll('.nodeContainer');
+        for (let i = 0; i < nodeContainers.length; i++) {
+            const container = nodeContainers[i];
+            if (on) {
+                this.mpm = true;
+                container.children[0].style.pointerEvents = 'none';
+                container.setAttribute('draggable', 'true');
+                container.addEventListener('dragend', (e) => {
+                    var rect = pitch.getBoundingClientRect();
+                    var xcoord = e.clientX - rect.x; //x position within the element.
+                    var ycoord = rect.bottom - e.clientY;  //y position within the element.
+                    if (xcoord > 0 && xcoord < rect.width && ycoord > 0 && ycoord < rect.height) {
+                        this.positionMap.set(i, [ycoord, xcoord]);
+                        this.isCustomFormation = true;
+                        //this.updateView(true);
+                        this.updateView2();
+                        this.movePlayerMode();
+                    }
+                });
+            }
+            else {
+                this.mpm = false;
+                container.children[0].style.pointerEvents = 'initial';
+                container.setAttribute('draggable', 'false');
+            }
         }
     },
 
@@ -284,6 +685,141 @@ FormationView.prototype = {
         }
     },
 
+    loadExisitingNodeLists : function() { //Alternative to reload players if you want to keep node positions
+        for (const [key, value] of this.nodes.entries()) {
+            const nodeBody = this.createNodeBody(key);
+            const node = value;
+            this.addNode(node, nodeBody);
+        }
+        for (const [key, value] of this.subs.entries()) {
+            const nodeBody = this.createSub(key);
+            const node = value;
+            this.addSub(nodeBody);
+        }
+    },
+
+    saveFrame : function() {
+        const obj = this.createFrameObject();
+        this.frames.push(obj);
+        this.currFrame = this.frames.length -1;
+        console.log(this.currFrame);
+        this.updateView();
+    },
+
+    createFrameObject : function() {
+        const annotations = this.view.querySelector('.annotateOverlay').cloneNode(true);
+        const drawings = this.view.querySelector('.drawOverlay').cloneNode(true);
+        return {
+            overlays : [annotations, drawings],
+            sport : this.sport.slice(),
+            subs : new Map(this.subs),
+            nodes : new Map(this.nodes),
+            formationStyle : this.formationStyle.slice(),
+            positionMap : new Map(this.positionMap),
+            isCustom : this.isCustomFormation,
+        };
+    },
+
+    loadFrame : function(frame) {
+        const overlays = frame.overlays;
+        const addEvents1 = overlays[0].querySelectorAll('.hideWithLayer');
+        this.addAnnotateEventListeners(addEvents1[0], overlays[0]);
+        const addEvents2 = overlays[1].querySelectorAll('.hideWithLayer');
+        this.addDrawEventListeners(addEvents2[0], overlays[1], addEvents2[1]);
+        this.overlays = overlays;
+        this.sport = frame.sport;
+        this.subs = frame.subs;
+        this.nodes = frame.nodes;
+        this.formationStyle = frame.formationStyle;
+        this.positionMap = frame.positionMap;
+        this.draggedPlayer = null;
+        this.isCustomFormation = frame.isCustom;
+    },
+
+    toJSON : function() {
+        const obj = this.createFrameObject();
+        const annotations = [];
+        const drawings = [];
+        const arrows = obj.overlays[1].querySelectorAll('.arrsvg');
+        for (let i = 0; i < arrows.length; i++) {
+            const paths = arrows[i].querySelectorAll('path');
+            const color = paths[0].style.fill;
+            const d = paths[1].getAttribute('d');
+            const coordx = d.substring(
+                d.indexOf(",") + 1,
+                d.indexOf(" ")
+            );
+            const coordy = d.substring(
+                d.lastIndexOf(",") + 2,
+                d.length
+            );
+            drawings.push([coordx, coordy, color]);
+        }
+        const notes = obj.overlays[0].querySelectorAll('.annotation');
+        for (let i = 0; i < notes.length; i++) {
+            const x = notes[i].style.left;
+            const y = notes[i].style.top;
+            const text = notes[i].innerText;
+            annotations.push([x, y, text]);
+        }
+        const nodes = this.mapToList(obj.nodes, true);
+        const subs = this.mapToList(obj.subs, true);
+        const pmap = this.mapToList(obj.positionMap);
+        const stringable = {
+            annotations : annotations,
+            drawings : drawings,
+            sport : obj.sport,
+            subs : subs,
+            nodes : nodes,
+            formationStyle : obj.formationStyle,
+            positionMap : pmap,
+            isCustom : obj.isCustom,
+        };
+        const string = JSON.stringify(stringable);
+        console.log(string);
+        return (string);
+    },
+
+    mapToList : function(map, playerMap = false) {
+        const keys = [];
+        const values = [];
+        for (const [key, value] of map.entries()) {
+            if(playerMap) {
+                keys.push(JSON.stringify(key));
+            }
+            else {
+                keys.push(key);
+            }
+            values.push(value);
+        }
+        return [keys, values];
+    },
+
+    cycleFrames : function() {
+        const obj = this.createFrameObject();
+        this.frames[this.currFrame] = obj;
+        if (this.frames.length < 2) {
+            return;
+        }
+        let frame = null;
+        //this.frames[this.currFrame] = this.createFrameObject();
+        if ((this.currFrame + 1) < this.frames.length) {
+            frame = this.frames[this.currFrame + 1];
+            this.currFrame = this.currFrame + 1;
+        }
+        else {
+            frame = this.frames[0];
+            this.currFrame = 0;
+        }
+        this.loadFrame(frame);
+        this.updateView2();
+        if (this.showPageNums == true) {
+            const pitch = this.view.children[1];
+            const pageNum = pitch.querySelector('.pageIndicator');
+            pageNum.innerText = `${this.currFrame+1}/${this.frames.length}`
+        }
+    },    
+    
     removePlayer : function(player) {
         let sub = this.subs.get(player);
         let node = this.nodes.get(player);
@@ -311,12 +847,15 @@ FormationView.prototype = {
     setFormation : function(formation) {
         if (formations.get(this.sport)[0].reduce(reducer) == formation.reduce(reducer)) {
             this.formationStyle = formation;
-            this.updateView();
             if(!(formationsContains(formations.get(this.sport), formation))) {
                 formations.get(this.sport).push(formation);
-                this.updateToolBar();
             }
+            this.updateView();
         }
+    },
+
+    showPageNums : function (val = true) {
+        this.showPageNums = val;
     },
 
     setTheme : function(theme) {
@@ -733,10 +1272,11 @@ function createButton(text, color) {
     return button;
 }
 
+let equals = (a, b) =>
+    a.length === b.length &&
+    a.every((v, i) => v === b[i]);
+
 function formationsContains(forms, formation) {
-    let equals = (a, b) =>
-        a.length === b.length &&
-        a.every((v, i) => v === b[i]);
     for (let i = 0; i < forms.length; i++) {
         if(equals(forms[i], formation)) {
             return true
