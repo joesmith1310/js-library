@@ -8,17 +8,18 @@ const formations = new Map([
 
 const reducer = (accumulator, curr) => accumulator + curr;
 
-function TeamViewer(viewerId, theme = 'gray') {
+function TeamViewer(viewerId, primary = 'gray', accent = 'red') {
     this.viewerId = viewerId;
     this.formationViews = [];
     this.playerForm = null;
     this.players = [];
-    this.theme = theme;
+    this.theme = primary;
+    this.secondaryTheme = accent;
 }
 
 TeamViewer.prototype = {
 
-    createFormationViews : function(width = 500, height = 500, sport = 'Soccer', formation = [1,4,4,2], nodeSize = 70, theme = this.theme) {
+    createFormationViews : function(width = 500, height = 500, sport = 'Soccer', formation = [1,4,4,2], nodeSize = 70, primaryColor = this.theme, accentColor = this.secondaryTheme) {
         let views = document.getElementsByClassName('tv-formation-view');
 
         for (let i = 0; i < views.length; i++) {
@@ -27,15 +28,19 @@ TeamViewer.prototype = {
                 view.style.cssText = `
                 width: ${width};
                 height: ${height};`;
-                let formationView = new FormationView(view, this, width, height, sport, formation, nodeSize, theme);
+                let formationView = new FormationView(view, this, width, height, sport, formation, nodeSize, primaryColor, accentColor);
                 this.formationViews.push(formationView);
                 formationView.init();
             }
         }
     },
 
-    setTheme : function(theme) {
-        this.theme = theme;
+    setPrimaryColor : function(color) {
+        this.theme = color;
+    },
+
+    setAccentColor : function(color) {
+        this.secondaryTheme = color;
     },
 
     getFormationView : function(index) {
@@ -93,11 +98,12 @@ TeamViewer.prototype = {
 
 }
 
-function FormationView(view, teamViewer, width, height, sport, formation, nodeSize, theme) {
+function FormationView(view, teamViewer, width, height, sport, formation, nodeSize, theme, secondaryTheme) {
     this.teamViewer = teamViewer;
     this.sport = sport;
     this.view = view;
     this.theme = theme;
+    this.secondaryTheme = secondaryTheme;
     this.subs = new Map();
     this.nodes = new Map();
     this.width = width;
@@ -117,6 +123,8 @@ function FormationView(view, teamViewer, width, height, sport, formation, nodeSi
     this.currFrame = 0;
 
     this.frames = [];
+
+    this.jsonLoaded = false;
 }
 
 FormationView.prototype = {
@@ -126,19 +134,20 @@ FormationView.prototype = {
         this.generatePositionMap();
         this.createPitch();
         this.createBench();
+        this.frames.push(this.createFrameObject());
     },
 
-    updateView : function(customPositionMap = false) {
+    updateView : function() {
+        this.mpm = false;
+        this.isCustomFormation = false;
         this.nodes.clear();
         this.subs.clear();
         this.view.removeChild(this.view.children[2]);
         this.view.removeChild(this.view.children[1]);
-        if (customPositionMap == false) {
-            this.generatePositionMap();
-            this.isCustomFormation = false;
-        }
+        this.generatePositionMap();
         this.createPitch();
         this.createBench();
+        this.loadExisitingNodeLists();
         this.reloadPlayers();
         this.setLayer(0);
     },
@@ -433,7 +442,10 @@ FormationView.prototype = {
         <option value="yellow">Yellow</option>
         <option value="red">Red</option>
         <option value="blue">Blue</option>
-        <option value="green">Green</option>`;
+        <option value="green">Green</option>
+        <option value="magenta">Magenta</option>
+        <option value="cyan">Cyan</option>
+        <option value="black">Black</option>`;
         canvas.appendChild(chooseColorSelector);
 
         this.addDrawEventListeners(clearButton, canvas, chooseColorSelector);
@@ -604,6 +616,13 @@ FormationView.prototype = {
                     if (xcoord > 0 && xcoord < rect.width && ycoord > 0 && ycoord < rect.height) {
                         this.positionMap.set(i, [ycoord, xcoord]);
                         this.isCustomFormation = true;
+                        const annotations = this.view.querySelector('.annotateOverlay').cloneNode(true);
+                        const drawings = this.view.querySelector('.drawOverlay').cloneNode(true);
+                        const addEvents1 = annotations.querySelectorAll('.hideWithLayer');
+                        this.addAnnotateEventListeners(addEvents1[0], annotations);
+                        const addEvents2 = drawings.querySelectorAll('.hideWithLayer');
+                        this.addDrawEventListeners(addEvents2[0], drawings, addEvents2[1]);
+                        this.overlays= [annotations, drawings];
                         //this.updateView(true);
                         this.updateView2();
                         this.movePlayerMode();
@@ -699,11 +718,12 @@ FormationView.prototype = {
     },
 
     saveFrame : function() {
+        this.frames[this.currFrame] = this.createFrameObject();
         const obj = this.createFrameObject();
         this.frames.push(obj);
         this.currFrame = this.frames.length -1;
-        console.log(this.currFrame);
-        this.updateView();
+        this.overlays = [];
+        this.updateView2();
     },
 
     createFrameObject : function() {
@@ -729,6 +749,7 @@ FormationView.prototype = {
         this.overlays = overlays;
         this.sport = frame.sport;
         this.subs = frame.subs;
+        console.log(this.subs);
         this.nodes = frame.nodes;
         this.formationStyle = frame.formationStyle;
         this.positionMap = frame.positionMap;
@@ -743,17 +764,27 @@ FormationView.prototype = {
         const arrows = obj.overlays[1].querySelectorAll('.arrsvg');
         for (let i = 0; i < arrows.length; i++) {
             const paths = arrows[i].querySelectorAll('path');
+            console.log(paths[1]);
             const color = paths[0].style.fill;
             const d = paths[1].getAttribute('d');
-            const coordx = d.substring(
+            const coord1x = d.substring(
+                1,
+                d.indexOf(",")
+            );
+            const coord1y = d.substring(
                 d.indexOf(",") + 1,
                 d.indexOf(" ")
             );
-            const coordy = d.substring(
+            const coord2x = d.substring(
+                d.indexOf("L") + 1,
+                d.lastIndexOf(",")
+            );
+            const coord2y = d.substring(
                 d.lastIndexOf(",") + 2,
                 d.length
             );
-            drawings.push([coordx, coordy, color]);
+            console.log([[coord1x, coord1y], [coord2x, coord2y], color]);
+            drawings.push([[coord1x, coord1y], [coord2x, coord2y], color]);
         }
         const notes = obj.overlays[0].querySelectorAll('.annotation');
         for (let i = 0; i < notes.length; i++) {
@@ -780,12 +811,57 @@ FormationView.prototype = {
         return (string);
     },
 
+    loadJSON : function(json) {
+        if (this.frames.length > 1 || this.jsonLoaded) {
+            this.saveFrame();
+        }
+        const obj = JSON.parse(json);
+        console.log(obj);
+        const nodes = this.listToMap(obj.nodes, playerMap = true);
+        const subs = this.listToMap(obj.subs, playerMap = true);
+        const pmap = this.listToMap(obj.positionMap);
+        this.formationStyle = obj.formationStyle;
+        this.sport = obj.sport;
+        this.isCustomFormation = obj.isCustom;
+        this.positionMap = pmap;
+        this.nodes = nodes;
+        this.subs = subs;
+        this.updateView2();
+        const drawOverlay = this.view.children[1].querySelector('.drawOverlay');
+        console.log(drawOverlay);
+        console.log(obj.drawings);
+        for (let i = 0; i < obj.drawings.length; i++) {
+            const arrow = obj.drawings[i];
+            point1 = {
+                x : Number(arrow[0][0]),
+                y : Number(arrow[0][1])
+            }
+            point2 = {
+                x : Number(arrow[1][0]),
+                y : Number(arrow[1][1])
+            }
+            this.drawArrow(point1, point2, drawOverlay, arrow[2]);
+        };
+        const annotateOverlay = this.view.children[1].querySelector('.annotateOverlay');
+        for (let i = 0; i < obj.annotations.length; i++) {
+            const comment = obj.annotations[i];
+            const x = Number(comment[0].substring(0, comment[0].indexOf('p')));
+            const y = Number(comment[1].substring(0, comment[1].indexOf('p')));
+            this.drawAnnotation(x+50, y, comment[2], annotateOverlay);
+            console.log([x, y]);
+        };
+        for (let i = this.layers.length - 1; i > -1; i--) {
+            this.setLayer(i);
+        };
+        this.jsonLoaded = true;
+    },
+
     mapToList : function(map, playerMap = false) {
         const keys = [];
         const values = [];
         for (const [key, value] of map.entries()) {
             if(playerMap) {
-                keys.push(JSON.stringify(key));
+                keys.push([key.name, key.number, key.pos, key.comment]);
             }
             else {
                 keys.push(key);
@@ -793,6 +869,19 @@ FormationView.prototype = {
             values.push(value);
         }
         return [keys, values];
+    },
+
+    listToMap : function(list, playerMap = false) {
+        const map = new Map();
+        for (let i = 0; i < list[0].length; i++) {
+            let key = list[0][i];
+            let val = list[1][i];
+            if (playerMap) {
+                key = new Player(key[0], key[1], key[2], key[3]);
+            }
+            map.set(key, val);
+        };
+        return map;
     },
 
     cycleFrames : function() {
@@ -818,6 +907,7 @@ FormationView.prototype = {
             const pageNum = pitch.querySelector('.pageIndicator');
             pageNum.innerText = `${this.currFrame+1}/${this.frames.length}`
         }
+        console.log(this.currFrame);
     },    
     
     removePlayer : function(player) {
@@ -850,7 +940,9 @@ FormationView.prototype = {
             if(!(formationsContains(formations.get(this.sport), formation))) {
                 formations.get(this.sport).push(formation);
             }
-            this.updateView();
+            this.isCustomFormation = false;
+            this.generatePositionMap();
+            this.updateView2();
         }
     },
 
@@ -858,8 +950,13 @@ FormationView.prototype = {
         this.showPageNums = val;
     },
 
-    setTheme : function(theme) {
-        this.theme = theme;
+    setPrimaryColor : function(color) {
+        this.theme = color;
+        this.updateView();
+    },
+
+    setAccentColor : function(color) {
+        this.secondaryTheme = color;
         this.updateView();
     },
 
@@ -972,7 +1069,7 @@ FormationView.prototype = {
         width: ${this.nodeSize - 5}px;
         height: ${this.nodeSize - 5}px;
         border-radius: ${(this.nodeSize - 5)/2}px;
-        background-color: red;
+        background-color: ${this.secondaryTheme};
         display: flex;
         flex-direction: column;
         align-items: center;
