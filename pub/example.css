@@ -1,6 +1,19 @@
 body {
-    margin: 0 150px 150px 150px;
+    margin: 0;
     font-family: 'Trebuchet MS', sans-serif;
+}
+
+.introBox {
+    width: 100vw;
+    height: 100vh;
+    background-image:url('demo_use.png');
+    background-position: center;
+}
+
+.introImg {
+    position: absolute;
+    min-width: 100vw;
+    min-height: 100vh;
 }
 
 .header {
@@ -24,4 +37,8 @@ h1 span {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 100px;
+}
+
+.tv-roster-view {
+    margin-bottom: 50px;
 }

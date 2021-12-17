@@ -3,7 +3,8 @@ let currFrame = 0;
 
 const formations = new Map([
     ['Soccer', [[1,4,4,2], [1,4,3,3], [1,4,5,1], [1,3,4,3]]],
-    ['Hockey', [[1,3,2], [1,4,1], [1,2,3]]]
+    ['Hockey', [[1,3,2], [1,4,1], [1,2,3]]],
+    ['Football', [[2,1,1,7], [1,1,2,7], [3,1,7], [2,2,7]]]
 ]);
 
 const reducer = (accumulator, curr) => accumulator + curr;
@@ -12,6 +13,7 @@ function TeamViewer(viewerId, primary = 'gray', accent = 'red') {
     this.viewerId = viewerId;
     this.formationViews = [];
     this.playerForm = null;
+    this.rosterView = null;
     this.players = [];
     this.theme = primary;
     this.secondaryTheme = accent;
@@ -19,16 +21,15 @@ function TeamViewer(viewerId, primary = 'gray', accent = 'red') {
 
 TeamViewer.prototype = {
 
-    createFormationViews : function(width = 500, height = 500, sport = 'Soccer', formation = [1,4,4,2], nodeSize = 70, primaryColor = this.theme, accentColor = this.secondaryTheme) {
+    createFormationViews : function(width = 500, height = 500, sport = 'Soccer', formation = [1,4,4,2], nodeSize = 70, primaryColor = this.theme, accentColor = this.secondaryTheme, landscape = false, editable = true, showSubsBench = true, interactive = true) {
         let views = document.getElementsByClassName('tv-formation-view');
-
         for (let i = 0; i < views.length; i++) {
             if (views[i].classList.contains(this.viewerId)) {
                 let view = views[i]
                 view.style.cssText = `
                 width: ${width};
                 height: ${height};`;
-                let formationView = new FormationView(view, this, width, height, sport, formation, nodeSize, primaryColor, accentColor);
+                let formationView = new FormationView(view, this, width, height, sport, formation, nodeSize, primaryColor, accentColor, landscape, editable, showSubsBench, interactive);
                 this.formationViews.push(formationView);
                 formationView.init();
             }
@@ -51,6 +52,10 @@ TeamViewer.prototype = {
         return this.playerForm;
     },
 
+    getRosterView : function() {
+        return this.rosterView;
+    },
+
     createPlayerForm : function(width = 500, theme = this.theme) {
         let forms = document.getElementsByClassName('tv-player-form');
         let form = null;
@@ -65,11 +70,28 @@ TeamViewer.prototype = {
         }
     },
 
+    createRosterView : function(width = 500, maxHeight = 500, theme = this.theme) {
+        let rosters = document.getElementsByClassName('tv-roster-view');
+        let roster = null;
+
+        for (let i = 0; i < rosters.length; i++) {
+            if (rosters[i].classList.contains(this.viewerId)) {
+                roster = rosters[i];
+                let rosterView = new RosterView(roster, this, width, maxHeight, theme);
+                this.rosterView = rosterView;
+                rosterView.init();
+            }
+        }
+    },
+
     addPlayer : function(name, num, pos, com) {
         let player = new Player(name, num, pos, com);
         for (let i = 0; i < this.formationViews.length; i++) {
             let view = this.formationViews[i];
             view.addPlayer(player);
+        }
+        if(this.rosterView != null) {
+            this.rosterView.addPlayer(player);
         }
         this.players.push(player);
         for (let i = 0; i < this.players.length; i++) {
@@ -94,11 +116,14 @@ TeamViewer.prototype = {
             let view = this.formationViews[i];
             view.removePlayer(playerObject);
         }
+        if (this.rosterView != null) {
+            this.rosterView.removePlayer(playerObject);
+        }
     }
 
 }
 
-function FormationView(view, teamViewer, width, height, sport, formation, nodeSize, theme, secondaryTheme) {
+function FormationView(view, teamViewer, width, height, sport, formation, nodeSize, theme, secondaryTheme, landscape, editable, showSubsBench, interactive) {
     this.teamViewer = teamViewer;
     this.sport = sport;
     this.view = view;
@@ -112,6 +137,12 @@ function FormationView(view, teamViewer, width, height, sport, formation, nodeSi
     this.positionMap = new Map();
     this.nodeSize = nodeSize;
     this.draggedPlayer = null;
+    this.editable = editable;
+    this.showSubsBench = showSubsBench;
+    this.interactive = interactive;
+    this.auto = false;
+    this.timer = 0;
+    this.landscape = landscape;
 
     this.layers = [];
     this.overlays = []; //Used when loading a frame
@@ -170,6 +201,14 @@ FormationView.prototype = {
 
     createToolBar : function() {
         let toolBar = document.createElement('div');
+        let dropdownDiv = document.createElement('div');
+        dropdownDiv.style.cssText = `
+        display: flex;
+        margin-bottom: 5px;`
+        let buttonDiv = document.createElement('div');
+        buttonDiv.style.cssText = `
+        display: flex;
+        margin-bottom: 5px;`
         let sportOptionLabel = document.createElement('label');
         sportOptionLabel.setAttribute('for', `sportOption${this.teamViewer.viewerId}`);
         sportOptionLabel.innerText = 'Sport';
@@ -189,8 +228,8 @@ FormationView.prototype = {
             }
             sportOption.appendChild(option);
         }
-        toolBar.appendChild(sportOptionLabel);
-        toolBar.appendChild(sportOption);
+        dropdownDiv.appendChild(sportOptionLabel);
+        dropdownDiv.appendChild(sportOption);
         let formationOptionLabel = document.createElement('label');
         formationOptionLabel.setAttribute('for', `formationOption${this.teamViewer.viewerId}`);
         formationOptionLabel.innerText = 'Formation';
@@ -218,8 +257,8 @@ FormationView.prototype = {
             option.selected = 'selected';
             formationOption.appendChild(option);
         }
-        toolBar.appendChild(formationOptionLabel);
-        toolBar.appendChild(formationOption);
+        dropdownDiv.appendChild(formationOptionLabel);
+        dropdownDiv.appendChild(formationOption);
         sportOption.style.cssText = `
         margin: 0 10px;`;
         formationOption.style.cssText = `
@@ -227,9 +266,14 @@ FormationView.prototype = {
         toolBar.style.cssText = `
         padding: 10px;
         display: flex;
-        align-items: center;`
+        flex-direction: column;`
 
         let drawButton = document.createElement('button');
+        drawButton.style.cssText = `
+        display: flex;
+        align-items: center;
+        height: 21px;
+        margin-right: 5px;`;
         if (this.activeLayer == 2) {
             drawButton.style.backgroundColor = 'gray';
         }
@@ -243,9 +287,14 @@ FormationView.prototype = {
                 this.setLayer(0);
             }
         });
-        toolBar.appendChild(drawButton);
+        buttonDiv.appendChild(drawButton);
 
         let annotateButton = document.createElement('button');
+        annotateButton.style.cssText = `
+        display: flex;
+        align-items: center;
+        height: 21px;
+        margin-right: 5px;`;
         if (this.activeLayer == 1) {
             annotateButton.style.backgroundColor = 'gray';
         }
@@ -259,14 +308,15 @@ FormationView.prototype = {
                 this.setLayer(0);
             }
         });
-        toolBar.appendChild(annotateButton);
+        buttonDiv.appendChild(annotateButton);
 
         let moveButton = document.createElement('button');
         moveButton.innerHTML = '&#8660;';
         moveButton.style.cssText = `
         display: flex;
         align-items: center;
-        height: 21px;`;
+        height: 21px;
+        margin-right: 5px;`;
         if (this.mpm) {
             moveButton.style.backgroundColor = 'gray';
         }
@@ -281,7 +331,7 @@ FormationView.prototype = {
                 moveButton.style.backgroundColor = 'initial';
             }
         });
-        toolBar.appendChild(moveButton);
+        buttonDiv.appendChild(moveButton);
 
         const saveButton = document.createElement('button');
         saveButton.innerHTML = '&#43;';
@@ -291,9 +341,10 @@ FormationView.prototype = {
         saveButton.style.cssText = `
         display: flex;
         align-items: center;
-        height: 21px;`
+        height: 21px;
+        margin-right: 5px;`
 
-        toolBar.appendChild(saveButton);
+        buttonDiv.appendChild(saveButton);
 
         const cycleButton = document.createElement('button');
         cycleButton.innerHTML = '&#8618;';
@@ -303,9 +354,10 @@ FormationView.prototype = {
         cycleButton.style.cssText = `
         display: flex;
         align-items: center;
-        height: 21px;`
+        height: 21px;
+        margin-right: 5px;`
 
-        toolBar.appendChild(cycleButton);
+        buttonDiv.appendChild(cycleButton);
 
         const jsonButton = document.createElement('button');
         jsonButton.innerHTML = 'JSON';
@@ -315,12 +367,20 @@ FormationView.prototype = {
         jsonButton.style.cssText = `
         display: flex;
         align-items: center;
-        height: 21px;`
+        height: 21px;
+        margin-right: 5px;`
 
-        toolBar.appendChild(jsonButton);
+        buttonDiv.appendChild(jsonButton);
 
+        toolBar.appendChild(dropdownDiv);
+        toolBar.appendChild(buttonDiv);
+        
         this.view.appendChild(toolBar);
 
+        if(!this.editable) {
+            toolBar.style.display = 'none';
+        }
+    
         return toolBar;
     },
 
@@ -335,19 +395,21 @@ FormationView.prototype = {
         this.view.appendChild(pitch);
         for (let i = 0; i < this.formationStyle.reduce(reducer); i++) {
             let node = document.createElement('div');
-            node.addEventListener('drop', (ev) => { 
-                ev.preventDefault();
-                this.switchPlayers(i, this.nodes);
-            });
-            node.addEventListener('dragover', function(ev) {
-                ev.preventDefault();
-            });
+            if (this.editable) {
+                node.addEventListener('drop', (ev) => { 
+                    ev.preventDefault();
+                    this.switchPlayers(i, this.nodes);
+                });
+                node.addEventListener('dragover', function(ev) {
+                    ev.preventDefault();
+                });
+            }
             node.style.cssText = `
             width: ${this.nodeSize}px;
             height: ${this.nodeSize}px;
             border-radius: ${this.nodeSize/2}px;
             background-color: white;
-            outline: 1px solid black;
+            outline: 1px solid ${this.secondaryTheme};
             display: flex;
             align-items: center;
             justify-content: center;
@@ -381,7 +443,7 @@ FormationView.prototype = {
         const pageIndicator = document.createElement('label');
         pageIndicator.classList.add('pageIndicator');
         if (this.frames.length == 0) {
-            pageIndicator.innerText = 'Click + to add new frames.'
+            pageIndicator.innerText = '1/1'
         }
         else {
             pageIndicator.innerText = `${this.frames.length}/${this.frames.length}`;
@@ -445,7 +507,9 @@ FormationView.prototype = {
         <option value="green">Green</option>
         <option value="magenta">Magenta</option>
         <option value="cyan">Cyan</option>
-        <option value="black">Black</option>`;
+        <option value="black">Black</option>
+        <option value="white">White</option>
+        <option value="${this.secondaryTheme}">Accent Color</option>`;
         canvas.appendChild(chooseColorSelector);
 
         this.addDrawEventListeners(clearButton, canvas, chooseColorSelector);
@@ -566,6 +630,9 @@ FormationView.prototype = {
         annotation.classList.add('annotation');
         annotation.style.cssText = `
         width: 100px;
+        font-size: 14px;
+        padding : 2px;
+        border-radius: 2px;
         word-wrap: break-word;
         background-color: white;
         position: absolute;
@@ -648,6 +715,9 @@ FormationView.prototype = {
         border: 1px solid black;
         overflow-y: scroll;`;
         this.view.appendChild(bench);
+        if (!this.showSubsBench) {
+            bench.style.display = 'none';
+        }
         let benchLabel = document.createElement('div');
         benchLabel.innerText = 'Substitutes';
         bench.appendChild(benchLabel);
@@ -663,14 +733,28 @@ FormationView.prototype = {
 
     generatePositionMap : function() {
         let positionIndex = 0;
-        for (let line = 0; line < this.formationStyle.length; line++) {
-            let spacingy = (this.height / (this.formationStyle.length));
-            let lineCoord = (0 + spacingy * (line+1)) - (spacingy/2);
-            for (let pos = 0; pos < this.formationStyle[line]; pos++) {
-                let spacingx = ((this.width * 0.7) / (this.formationStyle[line]));
-                let posCoord = (0 + spacingx * (pos+1)) - (spacingx/2);
-                this.positionMap.set(positionIndex, [lineCoord, posCoord]);
-                positionIndex++;
+        if (this.landscape) {
+            for (let line = 0; line < this.formationStyle.length; line++) {
+                let spacingy = ((this.width * 0.7) / (this.formationStyle.length));
+                let lineCoord = (0 + spacingy * (line+1)) - (spacingy/1.5);
+                for (let pos = 0; pos < this.formationStyle[line]; pos++) {
+                    let spacingx = ((this.height) / (this.formationStyle[line]));
+                    let posCoord = (0 + spacingx * (pos+1)) - (spacingx/2);
+                    this.positionMap.set(positionIndex, [posCoord, lineCoord]);
+                    positionIndex++;
+                }
+            }
+        }
+        else {
+            for (let line = 0; line < this.formationStyle.length; line++) {
+                let spacingy = (this.height / (this.formationStyle.length));
+                let lineCoord = (0 + spacingy * (line+1)) - (spacingy/2);
+                for (let pos = 0; pos < this.formationStyle[line]; pos++) {
+                    let spacingx = ((this.width * 0.7) / (this.formationStyle[line]));
+                    let posCoord = (0 + spacingx * (pos+1)) - (spacingx/2);
+                    this.positionMap.set(positionIndex, [lineCoord, posCoord]);
+                    positionIndex++;
+                }
             }
         }
     },
@@ -705,6 +789,7 @@ FormationView.prototype = {
     },
 
     loadExisitingNodeLists : function() { //Alternative to reload players if you want to keep node positions
+        console.log(this.nodes);
         for (const [key, value] of this.nodes.entries()) {
             const nodeBody = this.createNodeBody(key);
             const node = value;
@@ -908,11 +993,41 @@ FormationView.prototype = {
             pageNum.innerText = `${this.currFrame+1}/${this.frames.length}`
         }
         console.log(this.currFrame);
-    },    
+    },
+    
+    autoCycle : function() {
+        if (this.auto) {
+            this.cycleFrames();
+            setTimeout(() => {
+                this.autoCycle();
+            }, this.timer);
+        }
+    },
+
+    setAutoCycle : function(timer) {
+        if (timer == 0) {
+            this.auto = false;
+        }
+        else {
+            this.auto = true;
+            this.timer = timer;
+            this.autoCycle();
+        }
+    },
     
     removePlayer : function(player) {
-        let sub = this.subs.get(player);
-        let node = this.nodes.get(player);
+        let sub = null;
+        let node = null;
+        for (const [key, value] of this.nodes.entries()) {
+            if (comparePlayers(player, key)) {
+                node = value;
+            }
+        }
+        for (const [key, value] of this.subs.entries()) {
+            if (comparePlayers(player, key)) {
+                sub = value;
+            }
+        }
         if (node != null) {
             let nodeBody = this.view.children[1].children[node].children[0];
             this.view.children[1].children[node].removeChild(nodeBody);
@@ -946,6 +1061,11 @@ FormationView.prototype = {
         }
     },
 
+    setNodeSize : function(size) {
+        this.nodeSize = size;
+        this.updateView();
+    },
+
     showPageNums : function (val = true) {
         this.showPageNums = val;
     },
@@ -962,7 +1082,9 @@ FormationView.prototype = {
 
     createNodeBody : function(player) {
         let nodeBody = document.createElement('div');
-        nodeBody.setAttribute('draggable', 'true');
+        if(this.editable) {
+            nodeBody.setAttribute('draggable', 'true');
+        }
         nodeBody.addEventListener('dragstart', (ev) => {
             ev.preventDefault;
             this.collapseNode(nodeBody);
@@ -990,73 +1112,79 @@ FormationView.prototype = {
         nodeBody.appendChild(comment);
         nodeBody.appendChild(button);
         nodeBody.classList.add('collapsed');
-        nodeBody.addEventListener('dragover', () => {
-            nodeBody.style.boxShadow = '0 0 5px 3px #00ccff';
-        });
-        nodeBody.addEventListener('dragleave', () => {
-            nodeBody.style.boxShadow = 'none';
-        });
-        nodeBody.addEventListener('mouseover', () => {
-            document.body.style.cursor = 'pointer';
-            nodeBody.style.boxShadow = '0 0 5px 3px #00ccff';
-            if (!nodeBody.classList.contains('collapsed')) {
-                nodeBody.style.zIndex = 2;
-            }
-        });
-        nodeBody.addEventListener('mouseout', () => {
-            document.body.style.cursor = 'default';
-            nodeBody.style.boxShadow = 'none';
-            if (!nodeBody.classList.contains('collapsed')) {
-                nodeBody.style.zIndex = 1;
-            }
-        });
-        nodeBody.addEventListener('click', () => {
-            if (nodeBody.classList.contains('collapsed')) {
-                //expand here
-                name.innerText = player.name;
-                nodeBody.style.cssText = `
-                width: auto;
-                height: auto;
-                z-index: 1;
-                padding: 15px;
-                border-radius: 5px;
-                background-color: white;
-                position: absolute;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                border: 1px solid black;
-                min-height: ${this.nodeSize};
-                white-space: nowrap;`;
-                name.style.cssText = `
-                margin-bottom:10px;
-                font-size: 120%;`;
-                number.style.cssText = `
-                margin-bottom: 10px;
-                font-size: 150%;`;
-                position.style.cssText = `
-                display: block;
-                margin-bottom: 10px;
-                color: gray`;
-                comment.style.cssText = `
-                display: block;
-                margin: 0 0 10px 0;
-                min-width: 100px;`;
-                button.style.cssText = `
-                display: block;
-                background-color: ${this.theme};
-                height: 40px;
-                line-height: 40px;
-                border-radius: 20px;
-                text-align: center;`;
-                nodeBody.classList.remove('collapsed');
-            }
-            else {
-                //collapse here
-                name.innerText = initials;
-                this.collapseNode(nodeBody);
-            }
-        });
+        if (this.interactive) {
+
+            nodeBody.addEventListener('dragover', () => {
+                nodeBody.style.boxShadow = '0 0 5px 3px #00ccff';
+            });
+            nodeBody.addEventListener('dragleave', () => {
+                nodeBody.style.boxShadow = 'none';
+            });
+            nodeBody.addEventListener('mouseover', () => {
+                document.body.style.cursor = 'pointer';
+                nodeBody.style.boxShadow = '0 0 5px 3px #00ccff';
+                if (!nodeBody.classList.contains('collapsed')) {
+                    nodeBody.style.zIndex = 2;
+                }
+            });
+            nodeBody.addEventListener('mouseout', () => {
+                document.body.style.cursor = 'default';
+                nodeBody.style.boxShadow = 'none';
+                if (!nodeBody.classList.contains('collapsed')) {
+                    nodeBody.style.zIndex = 1;
+                }
+            });
+            nodeBody.addEventListener('click', () => {
+                if (nodeBody.classList.contains('collapsed')) {
+                    //expand here
+                    name.innerText = player.name;
+                    nodeBody.style.cssText = `
+                    width: auto;
+                    height: auto;
+                    z-index: 1;
+                    padding: 15px;
+                    border-radius: 5px;
+                    background-color: white;
+                    position: absolute;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    border: 1px solid ${this.secondaryTheme};
+                    min-height: ${this.nodeSize};
+                    white-space: nowrap;`;
+                    name.style.cssText = `
+                    margin-bottom:10px;
+                    font-size: 120%;`;
+                    number.style.cssText = `
+                    margin-bottom: 10px;
+                    font-size: 150%;`;
+                    position.style.cssText = `
+                    display: block;
+                    margin-bottom: 10px;
+                    color: gray`;
+                    comment.style.cssText = `
+                    display: block;
+                    margin: 0 0 10px 0;
+                    min-width: 100px;`;
+                    button.style.cssText = `
+                    display: block;
+                    background-color: ${this.theme};
+                    height: 40px;
+                    line-height: 40px;
+                    border-radius: 20px;
+                    text-align: center;`;
+                    nodeBody.classList.remove('collapsed');
+                }
+                else {
+                    //collapse here
+                    name.innerText = initials;
+                    this.collapseNode(nodeBody);
+                }
+                if (!this.editable) {
+                    button.style.display = 'none';
+                }
+            });
+        };
         comment.style.display = 'none';
         this.collapseNode(nodeBody);
         return nodeBody;
@@ -1335,12 +1463,131 @@ PlayerForm.prototype = {
         this.init();
     },
 
-    setTheme : function(theme) {
+    setPrimaryColor : function(theme) {
         this.theme = theme;
         this.updateForm();
     }
 
 
+}
+
+function RosterView(domObject, teamViewer, width, maxHeight, theme) {
+    this.teamViewer = teamViewer;
+    this.domObject = domObject;
+    this.width = width;
+    this.maxHeight = maxHeight;
+    this.tableBody = null;
+    this.theme = theme;
+}
+
+RosterView.prototype = {
+    init : function() {
+        const table = document.createElement('table');
+        const tableHeader = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const tableBody = document.createElement('tbody');
+        headerRow.innerHTML = `
+        <th>Number</th>
+        <th>Name</th>
+        <th>Position</th>
+        <th>Comment</th>
+        <th>Remove</th>
+        `
+        const cells = headerRow.querySelectorAll('th');
+        for (let i = 0; i < cells.length; i++) {
+            cells[i].style.cssText = `
+            position: sticky;
+            top: 0;
+            background-color: white;
+            border-bottom: 1px solid #ebebeb;
+            padding: 10px;`;
+        }
+        tableHeader.appendChild(headerRow);
+        table.appendChild(tableHeader);
+        table.appendChild(tableBody);
+        this.domObject.appendChild(table);
+
+        table.style.cssText = `
+        border: 1px solid #ebebeb;
+        display: block;
+        max-height: ${this.maxHeight};
+        overflow-y: scroll;
+        width: ${this.width}px`
+
+        tableBody.style.cssText = `
+        
+        `
+
+        this.tableBody = tableBody;
+    },
+
+    addPlayer : function(player) {
+        const playerRow = document.createElement('tr');
+        playerRow.innerHTML = `
+        <td>${player.number}</td>
+        <td>${player.name}</td>
+        <td>${player.pos}</td>
+        <td>${player.comment}</td>
+        <td></td>`
+        const removeButton = document.createElement('div');
+        removeButton.innerText = 'Remove';
+        removeButton.style.cssText = `
+        width: 100px;
+        height: 40px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        outline : 1px solid ${this.theme};
+        background-color: ${this.theme};
+        `;
+        removeButton.addEventListener('mouseover', () => {
+            removeButton.style.cursor = 'pointer';
+            removeButton.style.backgroundColor = 'white';
+        });
+        removeButton.addEventListener('mouseout', () => {
+            removeButton.style.cursor = 'default';
+            removeButton.style.backgroundColor = this.theme;
+        });
+        removeButton.addEventListener('click', () => {
+            this.teamViewer.removePlayer(player);
+        });
+        playerRow.children[4].appendChild(removeButton);
+        this.tableBody.appendChild(playerRow);
+        playerRow.style.width = this.width;
+        const cells = playerRow.querySelectorAll('td');
+        for (let i = 0; i < cells.length; i++) {
+            cells[i].style.cssText = `
+            width: ${this.width/5}px;
+            padding: 10px;
+            border-bottom: 1px solid #ebebeb;`;
+        }
+    },
+
+    removePlayer : function(player) {
+        const rows = this.tableBody.children;
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const cells = row.children;
+            if (player.number == cells[0].innerText) {
+                if (player.name == cells[1].innerText) {
+                    if (player.pos == cells[2].innerText) {
+                        if (player.comment == cells[3].innerText) {
+                            this.tableBody.removeChild(row);
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    setPrimaryColor : function(theme) {
+        this.theme = theme;
+        for (let i = 0; i < this.tableBody.children.length; i++) {
+            this.tableBody.children[i].children[4].children[0].style.backgroundColor = this.theme;
+            this.tableBody.children[i].children[4].children[0].style.outline = `1px solid ${this.theme}`;
+        };
+    }
 }
 
 function Player(name, number, pos, comment) {
@@ -1377,6 +1624,19 @@ function formationsContains(forms, formation) {
     for (let i = 0; i < forms.length; i++) {
         if(equals(forms[i], formation)) {
             return true
+        }
+    }
+    return false;
+}
+
+function comparePlayers (player1, player2) {
+    if (player1.name == player2.name) {
+        if (player1.pos == player2.pos) {
+            if (player1.comment == player2.comment) {
+                if (player1.number == player2.number) {
+                    return true;
+                }
+            }
         }
     }
     return false;
