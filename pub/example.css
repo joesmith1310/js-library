@@ -1,19 +1,64 @@
 body {
     margin: 0;
     font-family: 'Trebuchet MS', sans-serif;
+    color: #373637;
 }
 
-.introBox {
+#introBox {
     width: 100vw;
     height: 100vh;
     background-image:url('demo_use.png');
     background-position: center;
+    position: relative;
+    color: white;
 }
 
-.introImg {
+#introFilter {
     position: absolute;
-    min-width: 100vw;
-    min-height: 100vh;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: black;
+    opacity: 0.7;
+    z-index: 1;
+}
+
+#introText {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#optionsBox {
+    display: flex;
+    width: 300px;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 50px;
+}
+
+.button {
+    width: 120px;
+    height: 40px;
+    border-radius: 20px;
+    background-color: green;
+    border: solid 1px green;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.button:hover {
+    background-color: initial;
+    cursor: pointer;
 }
 
 .header {
@@ -24,11 +69,86 @@ body {
 }
 
 h1 {
-    font-size: 300%;
+    font-size: 500%;
 }
 
 h1 span {
     color: green;
+}
+
+h2 span {
+    color: green;
+}
+
+#generalDescription {
+    width: 100%;
+    display: flex;
+    padding: 50px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+    line-height: 30px;
+}
+
+#topMenu {
+    position: fixed;
+    height: 75px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content:center;
+    background-color: white;
+    border-bottom: 1px solid green;
+    box-sizing: border-box;
+    z-index: 2;
+}
+
+#homeButton {
+    position: absolute;
+    left: 50px;
+    top: 5px;
+    font-size: 50px;
+    text-decoration: none;
+    color: green;
+}
+
+#sideMenu {
+    top: 75px;
+    width: 20%;
+    position: fixed;
+    background-color: #f3f3f3;
+    height: 100%;
+    border-right: 1px solid green;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+#menuOptions {
+    background-color: white;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+#menuOptions a {
+    margin: 10px 20px;
+}
+
+#menuOptions a:link {
+    color: green;
+}
+
+#content {
+    margin-top: 75px;
+    width: 80%;
+    float: right;
+    background-color: white;
+    padding: 0 20px;
+    height: 500%;
+    box-sizing: border-box;
 }
 
 .box {
@@ -42,3 +162,87 @@ h1 span {
 .tv-roster-view {
     margin-bottom: 50px;
 }
+
+.splitView {
+    display: flex;
+}
+
+.splitViewExample {
+    padding: 20px;
+    width: 50%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.splitViewDescription {
+    width: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 30px;
+}
+
+.tv-formation-view {
+    margin-bottom: 0px;
+}
+
+.tv-roster-view {
+    margin-bottom: 0px;
+}
+
+.section {
+    padding-bottom: 50px;
+    border-bottom: 1px solid #f3f3f3;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.anchor {
+    position:absolute;
+    top: -100px;
+}
+
+#playbookImg {
+    width: 500px;
+    border-radius: 20px;
+}
+
+.codeDropdown {
+    height: 60px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    vertical-align: bottom;
+    position: relative;
+    background-color: #f3f3f3;
+    padding: 20px;
+    margin-top: 40px;
+    border-radius: 20px;
+    box-sizing: border-box;
+}
+
+.codeDropdown:hover {
+    cursor: pointer;
+}
+
+.codeContent {
+    left: 0;
+    width: 100%;
+    padding: 0 20px;
+    border-radius: 20px;
+    box-sizing: border-box;
+    max-height: 0;
+    position: absolute;
+    background-color: #f3f3f3;
+    overflow: hidden;
+    transition: all 0.5s ease-in-out;
+    z-index: 2;
+}
+
+.codeContent img {
+    width: 100%;
+}
+
+

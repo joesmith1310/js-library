@@ -1,0 +1,157 @@
+<head>
+    <link rel="stylesheet" href="example.css">
+
+    <script src="TeamViewer.js" type="text/javascript" defer></script>
+    <script src="example.js" type="text/javascript" defer></script>
+</head>
+<body>
+    <div id='topMenu'>
+        <a id='homeButton' href='teamViewer.html'>&#8962;</a>
+        <h2>TeamViewer<span>.js</span></h2>
+    </div>
+    <div id='sideMenu'>
+        <h2>Jump To</h2>
+        <div id='menuOptions'>
+            <a href='#examplesStart'>Intro</a>
+            <a href='#example1'>Displaying Pre Defined Teams</a>
+            <a href='#example2'>Interactive Nodes</a>
+            <a href='#example3'>Fully Editable Formations</a>
+            <a href='#example4'>Adding and Removing Players</a>
+            <a href='#example5'>Auto Cycling</a>
+        </div>
+    </div>
+
+    <div id='content'>
+        <h2>Intro</h2>
+        <div class='anchor' id='examplesStart'></div>
+        <div id='generalDescription'>TeamViewer.js is a javascript library that allows the developer to 
+            display sports team information in various formats. TeamViewer.js consists of four main components; 
+            'TeamViewer', 'FormationView', 'RosterView' and 'PlayerForm'. 'FormationView' is the most feature-rich part of the library, 
+            it allows the user to view members of a sports team as nodes on a field. 'RosterView' allows 
+            the user to see the members of the sports team in list format. A 'TeamViewer' represents 
+            a single group of players, it is what links all of the other components together. Any components 
+            linked to the same 'TeamViewer' represent the same 
+            player group. The developer is able to choose the level 
+            of interaction the user has with each of these components and customise them individually. Potential use cases
+            and the varying levels of user interaction are exampled below.
+        </div>
+        <h2>Examples</h2>
+        <div class='section'>
+            <div class='anchor' id='example1'></div>
+            <h3>Displaying Pre Defined Teams</h3>
+            <div class='splitView'>
+                <div class="splitViewExample">
+                    <h4>FormationView</h4>
+                    <div class="tv-formation-view viewer1"></div>
+                    <h4>RosterView</h4>
+                    <div class="tv-roster-view viewer1"></div>
+                </div>
+                <div class="splitViewDescription">
+                    In the most basic use case, TeamViewer can be used to display
+                    teams that the developer has already defined. The developer can 
+                    disable any user interaction with the TeamViewer components.<br><br>
+                    'FormationViews' can be converted to JSON strings and loaded at a later time. This means it 
+                    is possible for a developer to create the 'FormationViews' in a private 
+                    JS app so they have access to the edit functionality. They can then save 
+                    them and load them to their public web app where edit functionality is 
+                    disabled.
+                </div>
+            </div>
+            <div class='codeDropdown'>
+                <h3>See Code For This Example</h3>
+            </div>
+            <div class='codeContent'>
+                <img src='code1.png'>
+            </div>
+        </div>
+        <div class='section'>
+            <div class='anchor' id='example2'></div>
+            <h3>Interactive Nodes</h3>
+            <div class='splitView'>
+                <div class="splitViewDescription">
+                    The next level of user interaction sees the user able to click on nodes 
+                    to expand them and reveal more information about the players. 
+                    Notice this example features a substitutes list; a sub-component of 'FormationView' 
+                    which allows the user to see all the players who are in the squad, but not in 
+                    starting team. The nodes in this substitutes list are also expandable. Another thing 
+                    demonstrated here is the devloper's ability to change the orientation of the 
+                    'FormationView'.
+                </div>
+                <div class="splitViewExample">
+                    <div class="tv-formation-view viewer1"></div>
+                </div>
+            </div>
+        </div>
+        <div class='section'>
+            <div class='anchor' id='example3'></div>
+            <h3>Fully Editable Formations</h3>
+            <div class='splitView'>
+                <div class="splitViewExample">
+                    <div class="tv-formation-view viewer2"></div>
+                </div>
+                <div class="splitViewDescription">
+                    With all user interactions enabled the user is able to fully customise a 'FormationView'.
+                    Notice how the developer has the ability to change theme of the component and how this 
+                    'FormationView' is representing a different set of players for a different sport.<br><br>
+                    This example introduces the concept of frames. The user is able to add a new frame which can 
+                    be likened to starting a new page in a book. The user's previous pages are stored and can 
+                    be cycled through and edited after a new page has been added.<br><br>The user can make the 
+                    following edits to a frame:<br><br>1) Click the 'draw' button to enter drawing mode. This allows 
+                    the user to click two points on the view which will be connected by a colored arrow.<br><br>2) 
+                    Click the 'Annotate' button to enter annotate mode. The user can click a location on the frame 
+                    to add a comment. Press enter to finalise.
+                </div>
+            </div>
+            <div class='splitView'>
+                <div class="splitViewDescription">
+                    3) Click the bidirectional arrow icon to enter 
+                    move player mode. This allows the user to drag and drop nodes to new positions, allowing them to 
+                    create custom formations.<br><br>
+                    4) Click the plus button to add a new frame. Note this is a completely separate instance 
+                    of the FormationView so edits made to this frame are not applied to the rest of the frame 
+                    stack.<br><br>5) Click the curly arrow to cycle through frames the user has created.<br><br>6) If no 
+                    mode is selected, the default functionality is players can be swicthed when they are dragged 
+                    and dropped over eachother. <br><br>Try 
+                    using the formation view above to create new frames, edit them and cycle through them.
+                </div>
+                <div class="splitViewExample">
+                    <img id="playbookImg" src='playBook.png'></img>
+                    Multiple frames
+                </div>
+            </div>
+        </div>
+        <div class='section'>
+            <div class='anchor' id='example4'></div>
+            <h3>Adding and Removing Players</h3>
+            <div class='splitView'>
+                <div class="splitViewExample">
+                    <div class="tv-player-form viewer3"></div>
+                    <div class="tv-formation-view viewer3"></div>
+                    <div class="tv-roster-view viewer3"></div>
+                </div>
+                <div class="splitViewDescription">
+                    Here a new component of TeamViewer is introduced; the 'PlayerForm'. This can be used to add new players 
+                    to an exisiting team list. <br><br>As well as this it is possible to remove players from a team by clicking 
+                    remove either in the 'RosterView' player entry or clicking remove in the expanded pitch node. The component 
+                    must have the 'editable' user interaction enabled to display these remove buttons.<br><br>
+                    The key thing to note here is that multiple views can be used to represent the same group of players, 
+                    if a player is removed it is removed from all components connected to that group of players.
+                </div>
+            </div>
+        </div>
+        <div class='section'>
+            <div class='anchor' id='example5'></div>
+            <h3>Auto Cycling</h3>
+            <div class='splitView'>
+                <div class="splitViewDescription">
+                    Auto cycling is a feature that allows the developer to automatically cycle through a sequence of 
+                    'FormationView' frames. An example of where this can be useful is when the developer wishes to 
+                    player movements over the course of a came or training session.
+                </div>
+                <div class="splitViewExample">
+                    <div class="tv-formation-view viewer3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
