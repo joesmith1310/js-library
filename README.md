@@ -30,11 +30,11 @@ You must provide a unique id that is associated with this TeamViewer e.g. viewer
     <div class="tv-player-form viewer1"></div>
 ```
 The class list of the div should contain the class corresponding to the visual TeamViewer component: 
-```
+
 FormationView = tv-formation-view 
 RosterView = tv-roster-view
 PlayerForm = tv-player-form
-```
+
 The class list of the div should also contain the id of the TeamViewer object you want the component to 
 be linked to e.g. viewer1
 
