@@ -238,7 +238,9 @@
                 if(key == this.sport) {
                     option.selected = 'selected';
                 }
-                sportOption.appendChild(option);
+                if (key != 'Custom') {
+                    sportOption.appendChild(option);
+                }
             }
             dropdownDiv.appendChild(sportOptionLabel);
             dropdownDiv.appendChild(sportOption);
