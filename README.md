@@ -1,5 +1,7 @@
 # js-library-smith636
 
+__Please view in chrome as this was the browser used for development__
+
 ## Landing page:
 
 https://sheltered-retreat-45194.herokuapp.com/teamViewer.html
