@@ -701,7 +701,9 @@
                 const container = nodeContainers[i];
                 if (on) {
                     this.mpm = true;
-                    container.children[0].style.pointerEvents = 'none';
+                    if (container.children.length > 0) {
+                        container.children[0].style.pointerEvents = 'none';
+                    }
                     container.setAttribute('draggable', 'true');
                     container.addEventListener('dragend', (e) => {
                         var rect = pitch.getBoundingClientRect();
