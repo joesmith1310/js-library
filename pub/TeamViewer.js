@@ -8,7 +8,13 @@
         ['Soccer', [[1,4,4,2], [1,4,3,3], [1,4,5,1], [1,3,4,3]]],
         ['Hockey', [[1,3,2], [1,4,1], [1,2,3]]],
         ['Football', [[2,1,1,7], [1,1,2,7], [3,1,7], [2,2,7]]],
-        ['Basketball', [[1,2,2], [2,2,1], [2,1,2], [1,2,1,1]]]
+        ['Basketball', [[1,2,2], [2,2,1], [2,1,2], [1,2,1,1]]],
+        ['Baseball', [[6,3]]],
+        ['Cricket', [[4,4,3]]],
+        ['Futsal', [[1,2,2], [2,2,1], [2,1,2], [1,2,1,1]]],
+        ['Lacrosse', [[1,4,4,1], [1,4,3,2], [1,3,5,1], [1,3,4,2]]],
+        ['Rugby', [[5,5,5]]],
+        ['Custom', []]
     ]);
 
     const reducer = (accumulator, curr) => accumulator + curr;
@@ -40,6 +46,34 @@
             }
         },
 
+        createPlayerForm : function(width = 500, primaryColor = this.theme) {
+            let forms = document.getElementsByClassName('tv-player-form');
+            let form = null;
+
+            for (let i = 0; i < forms.length; i++) {
+                if (forms[i].classList.contains(this.viewerId)) {
+                    form = forms[i];
+                    let playerForm = new PlayerForm(form, this, width, primaryColor);
+                    this.playerForm = playerForm;
+                    playerForm.init();
+                }
+            }
+        },
+
+        createRosterView : function(width = 500, maxHeight = 500, primaryColor = this.theme, editable = true) {
+            let rosters = document.getElementsByClassName('tv-roster-view');
+            let roster = null;
+
+            for (let i = 0; i < rosters.length; i++) {
+                if (rosters[i].classList.contains(this.viewerId)) {
+                    roster = rosters[i];
+                    let rosterView = new RosterView(roster, this, width, maxHeight, primaryColor, editable);
+                    this.rosterView = rosterView;
+                    rosterView.init();
+                }
+            }
+        },
+
         setPrimaryColor : function(color) {
             this.theme = color;
         },
@@ -58,34 +92,6 @@
 
         getRosterView : function() {
             return this.rosterView;
-        },
-
-        createPlayerForm : function(width = 500, theme = this.theme) {
-            let forms = document.getElementsByClassName('tv-player-form');
-            let form = null;
-
-            for (let i = 0; i < forms.length; i++) {
-                if (forms[i].classList.contains(this.viewerId)) {
-                    form = forms[i];
-                    let playerForm = new PlayerForm(form, this, width, theme);
-                    this.playerForm = playerForm;
-                    playerForm.init();
-                }
-            }
-        },
-
-        createRosterView : function(width = 500, maxHeight = 500, theme = this.theme, editable = true) {
-            let rosters = document.getElementsByClassName('tv-roster-view');
-            let roster = null;
-
-            for (let i = 0; i < rosters.length; i++) {
-                if (rosters[i].classList.contains(this.viewerId)) {
-                    roster = rosters[i];
-                    let rosterView = new RosterView(roster, this, width, maxHeight, theme, editable);
-                    this.rosterView = rosterView;
-                    rosterView.init();
-                }
-            }
         },
 
         addPlayer : function(name, num, pos, com) {
@@ -369,7 +375,7 @@
 
             buttonDiv.appendChild(cycleButton);
 
-            const jsonButton = document.createElement('button');
+            /*const jsonButton = document.createElement('button');
             jsonButton.innerHTML = 'JSON';
             jsonButton.addEventListener('click', () => {
                 console.log(this.toJSON());
@@ -380,7 +386,7 @@
             height: 21px;
             margin-right: 5px;`
 
-            buttonDiv.appendChild(jsonButton);
+            buttonDiv.appendChild(jsonButton);*/
 
             toolBar.appendChild(dropdownDiv);
             toolBar.appendChild(buttonDiv);
@@ -472,6 +478,9 @@
             bottom : 5px;
             left: 5px;`
             pitch.appendChild(pageIndicator);
+            if (!this.showPageNums) {
+                pageIndicator.style.display = 'none';
+            }
 
         },
 
@@ -1082,7 +1091,7 @@
         },
 
         setFormation : function(formation) {
-            if (formations.get(this.sport)[0].reduce(reducer) == formation.reduce(reducer)) {
+            if (this.sport == 'Custom' || formations.get(this.sport)[0].reduce(reducer) == formation.reduce(reducer)) {
                 this.formationStyle = formation;
                 if(!(formationsContains(formations.get(this.sport), formation))) {
                     formations.get(this.sport).push(formation);
@@ -1110,23 +1119,24 @@
             this.updateView();
         },
 
-        showSubs : function(bool) {
-            this.showSubsBench = bool;
+        showSubs : function(subsBench) {
+            this.showSubsBench = subsBench;
             this.updateView();
         },
 
-        enableInteraction : function(bool) {
-            this.interactive = bool;
+        enableInteraction : function(interaction) {
+            this.interactive = interaction;
             this.updateView();
         },
 
-        enableEdit : function(bool) {
-            this.editable = bool;
+        enableEdit : function(edit) {
+            this.editable = edit;
             this.updateView();
         },
 
-        showPageNums : function (val = true) {
-            this.showPageNums = val;
+        showPageIndicator : function(pageIndicator=true) {
+            this.showPageNums = pageIndicator;
+            this.updateView();
         },
 
         setPrimaryColor : function(color) {
@@ -1661,8 +1671,8 @@
             }
         },
 
-        setPrimaryColor : function(theme) {
-            this.theme = theme;
+        setPrimaryColor : function(color) {
+            this.theme = color;
             for (let i = 0; i < this.tableBody.children.length; i++) {
                 this.tableBody.children[i].children[4].children[0].style.backgroundColor = this.theme;
                 this.tableBody.children[i].children[4].children[0].style.outline = `1px solid ${this.theme}`;

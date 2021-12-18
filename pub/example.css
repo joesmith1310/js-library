@@ -80,7 +80,7 @@ h2 span {
     color: green;
 }
 
-#generalDescription {
+.generalDescription {
     width: 100%;
     display: flex;
     padding: 50px;
@@ -138,6 +138,10 @@ h2 span {
 }
 
 #menuOptions a:link {
+    color: green;
+}
+
+#menuOptions a:visited {
     color: green;
 }
 
@@ -243,6 +247,45 @@ h2 span {
 
 .codeContent img {
     width: 100%;
+}
+
+.codeBox {
+    font-family: 'Courier New', monospace;
+    padding: 20px;
+    background-color: #f3f3f3;
+    border-radius: 20px;
+    margin: 20px 0;
+}
+
+.docContent {
+    width: 90%;
+    padding-left: 5%;
+    margin-bottom: 100px;
+}
+
+.docRow {
+    display:flex;
+}
+
+.docCol1 {
+    padding: 20px 0;
+    width: 20%;
+    box-sizing: border-box;
+
+}
+
+.docCol2 {
+    padding: 20px;
+    width: 80%;
+    box-sizing: border-box;
+}
+
+.docCol2 h4 {
+    margin-bottom: 5px;
+}
+
+h3 span {
+    color: green;
 }
 
 

@@ -3,6 +3,7 @@
 
     <script src="TeamViewer.js" type="text/javascript" defer></script>
     <script src="example.js" type="text/javascript" defer></script>
+    <script src="script.js" type="text/javascript" defer></script>
 </head>
 <body>
     <div id='topMenu'>
@@ -14,6 +15,7 @@
         <div id='menuOptions'>
             <a href='#examplesStart'>Intro</a>
             <a href='#example1'>Displaying Pre Defined Teams</a>
+            <a href='#example1p2'>Loading From JSON</a>
             <a href='#example2'>Interactive Nodes</a>
             <a href='#example3'>Fully Editable Formations</a>
             <a href='#example4'>Adding and Removing Players</a>
@@ -24,12 +26,13 @@
     <div id='content'>
         <h2>Intro</h2>
         <div class='anchor' id='examplesStart'></div>
-        <div id='generalDescription'>TeamViewer.js is a javascript library that allows the developer to 
-            display sports team information in various formats. TeamViewer.js consists of four main components; 
-            'TeamViewer', 'FormationView', 'RosterView' and 'PlayerForm'. 'FormationView' is the most feature-rich part of the library, 
+        <div class='generalDescription'>TeamViewer.js is a javascript library that allows the developer to 
+            display sports team information in various formats. TeamViewer.js consists of three main visual components; 
+            'FormationView', 'RosterView' and 'PlayerForm'. 'FormationView' is the most feature-rich part of the library, 
             it allows the user to view members of a sports team as nodes on a field. 'RosterView' allows 
-            the user to see the members of the sports team in list format. A 'TeamViewer' represents 
-            a single group of players, it is what links all of the other components together. Any components 
+            the user to see the members of the sports team in list format. 'PlayerForm' is a form that allows the 
+            user to add players to either of these views. A 'TeamViewer' represents 
+            a single group of players, it is what links all of the visual components together. Any components 
             linked to the same 'TeamViewer' represent the same 
             player group. The developer is able to choose the level 
             of interaction the user has with each of these components and customise them individually. Potential use cases
@@ -40,21 +43,16 @@
             <div class='anchor' id='example1'></div>
             <h3>Displaying Pre Defined Teams</h3>
             <div class='splitView'>
+                <div class="splitViewDescription">
+                    In the most basic use case, TeamViewer can be used to display
+                    teams that the developer has already defined. The developer can 
+                    disable any user interaction with the TeamViewer components.
+                </div>
                 <div class="splitViewExample">
                     <h4>FormationView</h4>
                     <div class="tv-formation-view viewer1"></div>
                     <h4>RosterView</h4>
                     <div class="tv-roster-view viewer1"></div>
-                </div>
-                <div class="splitViewDescription">
-                    In the most basic use case, TeamViewer can be used to display
-                    teams that the developer has already defined. The developer can 
-                    disable any user interaction with the TeamViewer components.<br><br>
-                    'FormationViews' can be converted to JSON strings and loaded at a later time. This means it 
-                    is possible for a developer to create the 'FormationViews' in a private 
-                    JS app so they have access to the edit functionality. They can then save 
-                    them and load them to their public web app where edit functionality is 
-                    disabled.
                 </div>
             </div>
             <div class='codeDropdown'>
@@ -62,6 +60,30 @@
             </div>
             <div class='codeContent'>
                 <img src='code1.png'>
+            </div>
+        </div>
+        <div class='section'>
+            <div class='anchor' id='example1p2'></div>
+            <h3>Loading From JSON</h3>
+            <div class='splitView'>
+                <div class="splitViewExample">
+                    <h4>FormationView</h4>
+                    <div class="tv-formation-view viewer1"></div>
+                </div>
+                <div class="splitViewDescription">
+                    An alternative way of displaying pre defined teams is using JSON.
+                    'FormationViews' can be converted to JSON strings and loaded at a later time. This means it 
+                    is possible for the developer to create a 'FormationView' in a private 
+                    page of the app where they have access to the edit functionality. The developer can then save 
+                    the 'FormationView' and load it to a public page on the web app where edit functionality is 
+                    disabled.
+                </div>
+            </div>
+            <div class='codeDropdown'>
+                <h3>See Code For This Example</h3>
+            </div>
+            <div class='codeContent'>
+                <img src='code2.png'>
             </div>
         </div>
         <div class='section'>
@@ -80,6 +102,12 @@
                 <div class="splitViewExample">
                     <div class="tv-formation-view viewer1"></div>
                 </div>
+            </div>
+            <div class='codeDropdown'>
+                <h3>See Code For This Example</h3>
+            </div>
+            <div class='codeContent'>
+                <img src='code3.png'>
             </div>
         </div>
         <div class='section'>
@@ -119,6 +147,12 @@
                     Multiple frames
                 </div>
             </div>
+            <div class='codeDropdown'>
+                <h3>See Code For This Example</h3>
+            </div>
+            <div class='codeContent'>
+                <img src='code4.png'>
+            </div>
         </div>
         <div class='section'>
             <div class='anchor' id='example4'></div>
@@ -132,11 +166,17 @@
                 <div class="splitViewDescription">
                     Here a new component of TeamViewer is introduced; the 'PlayerForm'. This can be used to add new players 
                     to an exisiting team list. <br><br>As well as this it is possible to remove players from a team by clicking 
-                    remove either in the 'RosterView' player entry or clicking remove in the expanded pitch node. The component 
+                    remove in the 'RosterView' player entry or clicking remove in the expanded pitch node. The component 
                     must have the 'editable' user interaction enabled to display these remove buttons.<br><br>
                     The key thing to note here is that multiple views can be used to represent the same group of players, 
                     if a player is removed it is removed from all components connected to that group of players.
                 </div>
+            </div>
+            <div class='codeDropdown'>
+                <h3>See Code For This Example</h3>
+            </div>
+            <div class='codeContent'>
+                <img src='code5.png'>
             </div>
         </div>
         <div class='section'>
@@ -151,6 +191,12 @@
                 <div class="splitViewExample">
                     <div class="tv-formation-view viewer3"></div>
                 </div>
+            </div>
+            <div class='codeDropdown'>
+                <h3>See Code For This Example</h3>
+            </div>
+            <div class='codeContent'>
+                <img src='code6.png'>
             </div>
         </div>
     </div>

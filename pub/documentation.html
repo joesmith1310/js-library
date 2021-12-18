@@ -1,0 +1,1009 @@
+<head>
+    <link rel="stylesheet" href="example.css">
+
+    <script src="script.js" type="text/javascript" defer></script>
+</head>
+<body>
+    <div id='topMenu'>
+        <a id='homeButton' href='teamViewer.html'>&#8962;</a>
+        <h2>TeamViewer<span>.js</span></h2>
+    </div>
+    <div id='sideMenu'>
+        <h2>Jump To</h2>
+        <div id='menuOptions'>
+            <a href='#gettingStarted'>Getting Started</a>
+            <a href='#teamViewerSection'>TeamViewer</a>
+            <a href='#formationViewSection'>FormationView</a>
+            <a href='#rosterViewSection'>RosterView</a>
+            <a href='#playerFormSection'>PlayerForm</a>
+        </div>
+    </div>
+
+    <div id='content'>
+        <div class='section'>
+            <h2>Getting Started</h2>
+            <div class='anchor' id='gettingStarted'></div>
+            <div>
+                This guide demonstrates how to incorporate TeamViewer.js into a project, add visual TeamViewer components to HTML and then access these elements in javascript<br><br> 
+                1) Download TeamViewer.js and add it to your project files.<br><br><br>
+                2) Include the script for TeamViewer in the HTML before any scripts that use it:
+                <div class='codeBox'>
+                    &lt;script src="TeamViewer.js" type="text/javascript" defer>&lt;/script&gt;
+                </div><br>
+                3) In the script that uses TeamViewer.js initialise a TeamViewer object:
+                <div class='codeBox'>
+                    const tv1 = new TeamViewer('viewer1', 'green', 'red');
+                </div>
+                You must provide a unique id that is associated with this TeamViewer e.g. viewer1<br><br><br>
+                4) In your HTML add a div element where you want a TeamViewer component to appear:
+                <div class='codeBox'>
+                    &lt;div class="tv-formation-view viewer1">&lt;/div&gt;<br>
+                    &lt;div class="tv-roster-view viewer1">&lt;/div&gt;<br>
+                    &lt;div class="tv-player-form viewer1">&lt;/div&gt;<br>
+                </div>
+                The class list of the div should contain the class corresponding to the visual TeamViewer component: <br><br>
+                <b>FormationView</b> = tv-formation-view <br><br>
+                <b>RosterView</b> = tv-roster-view<br><br>
+                <b>PlayerForm</b> = tv-player-form<br><br>
+                The class list of the div should also contain the id of the TeamViewer object you want the component to 
+                be linked to e.g. viewer1<br><br><br>
+                5) In the script that uses TeamViewer.js create the object referenced in the HTML:
+                <div class='codeBox'>
+                    tv1.createFormationViews();<br>
+                    tv1.createRosterView();<br>
+                    tv1.createPlayerForm();
+                </div><br>
+                6) Access the objects:
+                <div class='codeBox'>
+                    const fv1 = tv1.createFormationViews(0);<br>
+                    const rv = tv1.getRosterView();<br>
+                    const pf = tv1.getPlayerForm();
+                </div><br>
+            </div>
+        </div>
+        <div class='section'>
+            <h2>TeamViewer</h2>
+            <div class='anchor' id='teamViewerSection'></div>
+            <div class='generalDescription'>
+                The TeamViewer is the main component of TeamViewer.js. It is used to represent a group of players. All 
+                visual components of TeamViewer.js must be linked to a TeamViewer.
+            </div>
+            <h3>TeamViewer(viewerId, primary = 'gray', accent = 'red')</h3>
+            <div class='docContent'>
+                Constructor for the TeamViewer object.
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>viewerId : String</h4>
+                        <div class='docText'>
+                            A unique ID to be assigned to the TeamViewer
+                        </div>
+                        <h4>primary : String</h4>
+                        <div class='docText'>
+                            The primary color of the TeamViewer and the default color for all its visual components
+                        </div>
+                        <h4>accent : String</h4>
+                        <div class='docText'>
+                            The accent color of the TeamViewer and the default accent color for all its visual components
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>TeamViewer</h4>
+                        <div class='docText'>
+                            The TeamViewer object
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    const tv1 = new TeamViewer('viewer1', 'green', 'red');
+                </div>
+            </div>
+            <h3>TeamViewer.<span>createFormationViews</span>(width = 500, height = 500, sport = 'Soccer', formation = [1,4,4,2], nodeSize = 70, primaryColor = primaryColor, accentColor = accentColor, landscape = false, editable = true, showSubsBench = true, interactive = true)</h3>
+            <div class='docContent'>
+                Creates all of the FormationView objects associated with this TeamViewer. The FormationViews should have each been indicated in the HTML
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>width: Number</h4>
+                        <div class='docText'>
+                            The default width for all FormationViews associated with this TeamViewer (pixels)
+                        </div>
+                        <h4>height : Number</h4>
+                        <div class='docText'>
+                            The default height for all FormationViews associated with this TeamViewer (pixels)
+                        </div>
+                        <h4>sport : String</h4>
+                        <div class='docText'>
+                            Must be in {'Soccer', 'Hockey', 'Football', 'Basketball', 'Baseball', 'Cricket', 'Futsal', 'Lacrosse', 'Rugby', 'Custom'}
+                        </div>
+                        <h4>formation : [Number]</h4>
+                        <div class='docText'>
+                            Initial formation for all FormationViews associated with this TeamViewer e.g. [1,4,4,2]
+                        </div>
+                        <h4>nodeSize : Number</h4>
+                        <div class='docText'>
+                            The initial size of the nodes for all FormationViews associated with this TeamViewer (pixels)
+                        </div>
+                        <h4>primaryColor : String</h4>
+                        <div class='docText'>
+                            The primary color for all FormationViews associated with this TeamViewer. Primary color of a FormationView is the color of the pitch
+                        </div>
+                        <h4>accentColor : String</h4>
+                        <div class='docText'>
+                            The accent color for all FormationViews associated with this TeamViewer. AccentColor of a FormationView is the color of the nodes and buttons
+                        </div>
+                        <h4>landscape : Boolean</h4>
+                        <div class='docText'>
+                            If true all FormationViews associated with this TeamViewer are landscape by default, if not they are portrait
+                        </div>
+                        <h4>editable : Boolean</h4>
+                        <div class='docText'>
+                            If true all FormationViews associated with this TeamViewer each have a tool bar by default which allows the user to edit them. The user can also move players/nodes around and remove players. If not the user is not able to edit the FormationViews by default
+                        </div>
+                        <h4>showSubsBench : Boolean</h4>
+                        <div class='docText'>
+                            If true all FormationViews associated with this TeamViewer each have a section displaying the members of the team who aren't on the pitch. If false this section is hidden
+                        </div>
+                        <h4>interactive : Boolean</h4>
+                        <div class='docText'>
+                            If true the nodes in all FormationViews associated with this TeamViewer are expandable by default
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    tv1.createFormationViews(450, 300, 'Soccer', [1,4,4,2], 50, 'green', '#C70039', true, false, false, false);
+                </div>
+            </div>
+            <h3>TeamViewer.<span>createPlayerForm</span>(width = 500, theme = primaryColor)</h3>
+            <div class='docContent'>
+                Creates a PlayerForm associated with this TeamViewer. The PlayerForm should have been marked in the HTML (Each TeamViewer should only have one or zero PlayerForms)
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>width : Number</h4>
+                        <div class='docText'>
+                            The width of the PlayerForm DOM element (pixels)
+                        </div>
+                        <h4>primaryColor : String</h4>
+                        <div class='docText'>
+                            The primary color of the PlayerForm DOM element. In a PlayerForm primary color is the color of the fields and buttons
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    tv1.createPlayerForm(500, '#981717');
+                </div>
+            </div>
+            <h3>TeamViewer.<span>createRosterView</span>(width = 500, maxHeight = 500, theme = primaryColor, ediatble = true)</h3>
+            <div class='docContent'>
+                Creates a RosterView associated with this TeamViewer. The RosterView should have been marked in the HTML (Each TeamViewer should only have one or zero RosterViews)
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>width : Number</h4>
+                        <div class='docText'>
+                            The width of the RosterView DOM element (pixels)
+                        </div>
+                        <h4>maxHeight : Number</h4>
+                        <div class='docText'>
+                            The maxHeight of the RosterView DOM element (pixels)
+                        </div>
+                        <h4>primaryColor : String</h4>
+                        <div class='docText'>
+                            The primary color of the RosterView DOM element. In a RosterView primary color is the color of the remove buttons. Note these buttons are only visible if the RosterView is editable.
+                        </div>
+                        <h4>editable : Boolean</h4>
+                        <div class='docText'>
+                            If true the user is able to remove players from the TeamViewer via the RosterView DOM element
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    tv1.createRosterView(500, 400, '#981717', false);
+                </div>
+            </div>
+            <h3>TeamViewer.<span>setPrimaryColor</span>(color)</h3>
+            <div class='docContent'>
+                Sets the primary color of the TeamViewer. This is also the default primary color of all of its associated components
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>color : String</h4>
+                        <div class='docText'>
+                            The new primary color
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    tv1.setPrimaryColor('green');
+                </div>
+            </div>
+            <h3>TeamViewer.<span>setAccentColor</span>(color)</h3>
+            <div class='docContent'>
+                Sets the accent color of the TeamViewer. This is also the default accent color of all of its associated components
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>color : String</h4>
+                        <div class='docText'>
+                            The new accent color
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    tv1.setAccentColor('green');
+                </div>
+            </div>
+            <h3>TeamViewer.<span>getFormationView</span>(index)</h3>
+            <div class='docContent'>
+                Returns the nth FormationView object associated with this TeamViewer
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>index : Number</h4>
+                        <div class='docText'>
+                            The index of the required TeamViewer. The index of the FormationViews is the order in which they appear in the HTML. The first FormationView is at index 0
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>FormationView</h4>
+                        <div class='docText'>
+                            The nth FormationView object associated with this TeamViewer or null if there isn't one
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    const fv1 = tv1.getFormationView(0);
+                </div>
+            </div>
+            <h3>TeamViewer.<span>getRosterView</span>()</h3>
+            <div class='docContent'>
+                Returns the RosterView object associated with this TeamViewer
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>none</h4>
+                        <div class='docText'>
+                            Does not accept parameters
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>RosterView</h4>
+                        <div class='docText'>
+                            The RosterView object associated with this TeamViewer or null if there isn't one
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    const rv = tv1.getRosterView();
+                </div>
+            </div>
+            <h3>TeamViewer.<span>getPlayerForm</span>()</h3>
+            <div class='docContent'>
+                Returns the PlayerForm object associated with this TeamViewer
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>none</h4>
+                        <div class='docText'>
+                            Does not accept parameters
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>PlayerForm</h4>
+                        <div class='docText'>
+                            The PlayerForm object associated with this TeamViewer or null if there isn't one
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    const pf = tv1.getPlayerForm();
+                </div>
+            </div>
+            <h3>TeamViewer.<span>addPlayer</span>(name, num, pos, com)</h3>
+            <div class='docContent'>
+                Adds a player to the group of players being represented by this TeamViewer
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>name : String</h4>
+                        <div class='docText'>
+                            The name of the new player
+                        </div>
+                        <h4>num : Number</h4>
+                        <div class='docText'>
+                            The number of the new player
+                        </div>
+                        <h4>pos : String</h4>
+                        <div class='docText'>
+                            The position of the new player
+                        </div>
+                        <h4>com : String</h4>
+                        <div class='docText'>
+                            Any comment associated with the player 
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    tv1.addPlayer('Scottie Barnes', 4, 'Power Forward', 'Height: 6.7');
+                </div>
+            </div>
+            <h3>TeamViewer.<span>removePlayer</span>(player)</h3>
+            <div class='docContent'>
+                Removes a player from the group of players being represented by this TeamViewer
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>player : Number</h4>
+                        <div class='docText'>
+                            The number of the player to be removed
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    tv1.removePlayer(4);
+                </div>
+            </div>
+        <div class='section'>
+            <h2>FormationView</h2>
+            <div class='anchor' id='formationViewSection'></div>
+            <div class='generalDescription'>
+                The FormationView object must first be obtained using TeamViewer.getFormationView(). A FormationView is a visual component of TeamViewer.js that allows the user to see the players of the associated TeamViewer on a pitch. Each FormationView can have multiple frames (pages) which can each display their own formation, drawings and annotations. Each TeamViewer can have multiple FormationViews associated with it
+            </div>
+            <h3>FormationView.<span>toJSON</span>()</h3>
+            <div class='docContent'>
+                Converts the frame currently being displayed by the FormationView into a JSON string
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not accept parameters
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>String</h4>
+                        <div class='docText'>
+                            The JSON string of the frame
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    const jsonString = fv1.toJSON();
+                </div>
+            </div>
+            <h3>FormationView.<span>loadJSON</span>(json)</h3>
+            <div class='docContent'>
+                Creates a new frame from a JSON string and adds this frame to the FormationView
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>json : String</h4>
+                        <div class='docText'>
+                            The JSON string generated using FormationView.toJSON()
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.loadJSON(jsonString);
+                </div>
+            </div>
+            <h3>FormationView.<span>cycleFrames</span>()</h3>
+            <div class='docContent'>
+                If a FormationView has multiple frames, the currently displayed frame is changed to the next frame in the frame stack. The frame stack is cyclical
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not accept parameters
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.cycleFrames();
+                </div>
+            </div>
+            <h3>FormationView.<span>setAutoCycle</span>(timer)</h3>
+            <div class='docContent'>
+                If a FormationView has multiple frames, it will cycle through them at a given interval
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>timer : Number</h4>
+                        <div class='docText'>
+                            The milliseconds for which each frame is displayed until the frames are cycled. If zero, auto cycling is turned off
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.setAutoCycle(2000);
+                </div>
+            </div>
+            <h3>FormationView.<span>setOrientation</span>()</h3>
+            <div class='docContent'>
+                Changes the orientation of the FormationView
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>landscape : Boolean</h4>
+                        <div class='docText'>
+                            If true the FormationView is set to landscape, if flase the FormationView is set to portrait
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.setOrientation(true);
+                </div>
+            </div>
+            <h3>FormationView.<span>setFormation</span>(formation)</h3>
+            <div class='docContent'>
+                Changes the formation of the frame currently being displayed by the FormationView
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>formation : [Number]</h4>
+                        <div class='docText'>
+                            The new formation e.g. [1,4,4,2]. Note that the sum of the array must equal the number of players in a team of the associated sport .e.g 11 for soccer. If the sport is 'Custom' any number of players is allowed
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.setFormation([1,2,4,4,2]);
+                </div>
+            </div>
+            <h3>FormationView.<span>setNodeSize</span>(size)</h3>
+            <div class='docContent'>
+                Sets the node size for the FormationView
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>size : Number</h4>
+                        <div class='docText'>
+                            The new node size (pixels)
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.setNodeSize(70);
+                </div>
+            </div>
+            <h3>FormationView.<span>setWidth</span>(width)</h3>
+            <div class='docContent'>
+                Set the width of the FormationView
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>width : Number</h4>
+                        <div class='docText'>
+                            The new width of the FormationView (pixels)
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.setWidth(400);
+                </div>
+            </div>
+            <h3>FormationView.<span>setHeight</span>(height)</h3>
+            <div class='docContent'>
+                Set the height of the FormationView
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>height : Number</h4>
+                        <div class='docText'>
+                            The new height of the FormationView (pixels)
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.setHeight(400);
+                </div>
+            </div>
+            <h3>FormationView.<span>showSubs</span>(subsBench)</h3>
+            <div class='docContent'>
+                Set whether the FormationView displays a substitutes bench or not
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>subsBench : Boolean</h4>
+                        <div class='docText'>
+                            If true then a substitutes bench is displayed, if false the substitutes bench is hidden
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.showSubs(true);
+                </div>
+            </div>
+            <h3>FormationView.<span>enableInteraction</span>(interaction)</h3>
+            <div class='docContent'>
+                Enable or disable user interaction with the FormationView (enable/disable expandable nodes)
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>interaction : Boolean</h4>
+                        <div class='docText'>
+                            If true then user interaction is enabled, if false user interaction is disabled
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.enableInteraction(true);
+                </div>
+            </div>
+            <h3>FormationView.<span>enableEdit</span>(edit)</h3>
+            <div class='docContent'>
+                Enable or disable user edit mode. In user edit mode the user is presented with a tool bar allowing them to move/swap players, draw and annotate frames. The user can also remove players from the TeamViewer via the FormationView
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>edit : Boolean</h4>
+                        <div class='docText'>
+                            If true then user edit mode is enabled, if false user edit mode is disabled
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.enableEdit(true);
+                </div>
+            </div>
+            <h3>FormationView.<span>showPageIndicator</span>(pageIndicator)</h3>
+            <div class='docContent'>
+                Enable or disable the page indicator in the bottom corner of the FormationView
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>pageIndicator : Boolean</h4>
+                        <div class='docText'>
+                            If true then the page indicator is enabled, if false the page indicator is disabled
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.showPageIndicator(true);
+                </div>
+            </div>
+            <h3>FormationView.<span>setPrimaryColor</span>(color)</h3>
+            <div class='docContent'>
+                Sets the primary color of the FormationView. In a FormationView the primary color is the pitch color
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>color : String</h4>
+                        <div class='docText'>
+                            The new primary color of the FormationView
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.setPrimaryColor('Red');
+                </div>
+            </div>
+            <h3>FormationView.<span>setAccentColor</span>(color)</h3>
+            <div class='docContent'>
+                Sets the accent color of the FormationView. In a FormationView the accent color is the node and button color
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>color : String</h4>
+                        <div class='docText'>
+                            The new accent color of the FormationView
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    fv1.setAccentColor('blue');
+                </div>
+            </div>
+        </div>
+        <div class='section'>
+            <h2>RosterView</h2>
+            <div class='anchor' id='rosterViewSection'></div>
+            <div class='generalDescription'>
+                The RosterView object must first be obtained using TeamViewer.getRosterView(). A RosterView is a visual component of TeamViewer.js that allows the user to see the players of the associated TeamViewer in list form. Each TeamViewer should only have one RosterView associated with it
+            </div>
+            <h3>RosterView.<span>setPrimaryColor</span>(color)</h3>
+            <div class='docContent'>
+                Set the primary color for the RosterView. In a RosterView the primary color is the color of the remove buttons (Note remove buttons are only visible when the RosterView is editable)
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>color : String</h4>
+                        <div class='docText'>
+                            The new primary color for the RosterView
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    rv.setPrimaryColor('green');
+                </div>
+            </div>
+        </div>
+        <div class='section'>
+            <h2>PlayerForm</h2>
+            <div class='anchor' id='playerFormSection'></div>
+            <div class='generalDescription'>
+                The PlayerForm object must first be obtained using TeamViewer.getPlayerForm(). A PlayerForm is a visual component of TeamViewer.js that allows the user to add players to the associated TeamViewer. Each TeamViewer should only have one PlayerForm associated with it
+            </div>
+            <h3>PlayerForm.<span>setPrimaryColor</span>(color)</h3>
+            <div class='docContent'>
+                Set the primary color for the PlayerForm. In a PlayerForm the primary color is the color of the input fields and buttons 
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Parameters</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>color : String</h4>
+                        <div class='docText'>
+                            The new primary color for the PlayerForm
+                        </div>
+                    </div>
+                </div>
+                <div class='docRow'>
+                    <div class='docCol1'>
+                        <h3>Returns</h3>
+                    </div>
+                    <div class='docCol2'>
+                        <h4>null</h4>
+                        <div class='docText'>
+                            Does not have a return type
+                        </div>
+                    </div>
+                </div>
+                <h3>Example</h3>
+                <div class='codeBox'>
+                    pf.setPrimaryColor('green');
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
