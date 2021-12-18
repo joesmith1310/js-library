@@ -238,9 +238,11 @@
                 if(key == this.sport) {
                     option.selected = 'selected';
                 }
-                if (key != 'Custom') {
-                    sportOption.appendChild(option);
+                sportOption.appendChild(option);
+                if (key == 'Custom' && this.formationStyle != 'Custom') {
+                    option.style.display = 'none';
                 }
+                
             }
             dropdownDiv.appendChild(sportOptionLabel);
             dropdownDiv.appendChild(sportOption);
