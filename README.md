@@ -48,7 +48,7 @@ tv1.createPlayerForm();
 ```
 ### 6) Access the objects:
 ```
-const fv1 = tv1.createFormationViews(0);
+const fv1 = tv1.getFormationView(0);
 const rv = tv1.getRosterView();
 const pf = tv1.getPlayerForm();
 ```
